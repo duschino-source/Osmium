@@ -1,0 +1,4 @@
+DeepSeek CLI (synthetic fixture)
+Reading the workspace.
+Updated src/main.ts (+4 -1)
+Done.

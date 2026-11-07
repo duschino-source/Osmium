@@ -57,7 +57,11 @@ export type AgentEvent =
   | { type: 'file-edit'; path: string; added: number; removed: number }
   | { type: 'approval'; id: string; kind: 'command' | 'edit' | 'network'; detail: string }
   | { type: 'usage'; limitHit?: boolean; note?: string }
-  | { type: 'status'; state: 'idle' | 'working' | 'waiting' | 'error'; message?: string }
+  | {
+      type: 'status';
+      state: 'idle' | 'working' | 'waiting' | 'error' | 'interrupted' | 'cancelled' | 'closed';
+      message?: string;
+    }
   | { type: 'raw'; data: string };
 
 export interface ProjectSummary {
@@ -134,3 +138,35 @@ export interface CliUsageStats {
   lastLimitHitAt?: number;
   lastNote?: string;
 }
+
+export type ThemeMode = 'light' | 'dark' | 'system';
+export type ThemePalette = 'blue' | 'teal' | 'forest' | 'graphite';
+
+export interface OsmiumSettings {
+  theme: ThemeMode;
+  palette: ThemePalette;
+  fontSize: number;
+  sidebarVisible: boolean;
+  formatOnSave: boolean;
+  autoSave: boolean;
+  defaultApprovalMode: ApprovalMode;
+  telemetryOptIn: boolean;
+  keybindings: Record<string, string>;
+}
+
+export const DEFAULT_OSMIUM_SETTINGS: OsmiumSettings = {
+  theme: 'light',
+  palette: 'blue',
+  fontSize: 13,
+  sidebarVisible: true,
+  formatOnSave: true,
+  autoSave: false,
+  defaultApprovalMode: 'ask',
+  telemetryOptIn: false,
+  keybindings: {
+    'osmium.commandPalette': 'CommandOrControl+K',
+    'osmium.toggleAgentPanel': 'CommandOrControl+L',
+    'osmium.toggleSidebar': 'CommandOrControl+B',
+    'osmium.openSettings': 'CommandOrControl+,',
+  },
+};

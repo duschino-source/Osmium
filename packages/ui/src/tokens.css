@@ -1,3 +1,5 @@
+@import './workbench.css';
+
 @font-face {
   font-family: 'Inter';
   font-style: normal;
@@ -30,77 +32,245 @@
   src: url('./fonts/Inter-Bold.woff2') format('woff2');
 }
 
+/* ==========================================================================
+   Osmium design tokens
+   Operate surface: a native-feeling workbench (Xcode as the reference).
+   - Neutral materials, one tint, hairline separators.
+   - Light and dark are both first-class. `data-theme` is always set on <html>
+     by the app (resolved from the system when the user picks "System").
+   ========================================================================== */
+
 :root {
-  /* Core Surfaces & Ink (Section 7 & Section 13) */
-  --bg-ground: #f6f8f5;
-  --bg-sidebar: #eaf1e8;
-  --bg-ide-panel: #f0f5ee;
-  --bg-surface: #ffffff;
-  --border-default: #d2dfd0;
-  --border-subtle: #d2dfd0;
-  --text-ink: #1b2b22;
-  --text-muted: #566a5e;
-  --accent-primary: #2f6b4f;
-  --accent-primary-text: #ffffff;
-  --bg-accent-subtle: #dcebd9;
+  color-scheme: light;
 
-  /* Diff & Git Status Colors */
-  --bg-diff-add: #e3f3e2;
-  --diff-add-bg: #e3f3e2;
-  --bg-diff-remove: #f8e4e4;
-  --diff-remove-bg: #f8e4e4;
-  --text-diff-add: #2f6b4f;
-  --text-diff-remove: #b83b3b;
-  --text-git-modified: #8a5a1e;
-
-  /* CLI Identity Colors (always shown as colored dot + name, never color alone) */
-  --cli-codex: #1b2b22;
+  /* Neutral Apple-material palette (DESIGN.md §2). One tint only. */
+  --bg-ground: #ffffff;
+  --bg-sidebar: #f5f5f7;
+  --border-default: #d1d1d6;
+  --text-ink: #1d1d1f;
+  --text-muted: #6e6e73;
+  --accent-primary: #0071e3;
+  /* Owner-supplied logo only (see DESIGN.md §1.4). Never use as UI chrome. */
+  --brand-mark-ink: #0e1a14;
+  --brand-mark-accent: #1b8f62;
+  --bg-diff-add: rgba(36, 138, 61, 0.13);
+  --bg-diff-remove: rgba(215, 0, 21, 0.1);
+  --cli-codex: #1d1d1f;
   --cli-antigravity: #2f5fd0;
   --cli-deepseek: #6b4fd0;
 
-  /* Typography */
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-mono: ui-monospace, 'Menlo', 'Consolas', monospace;
-  --font-size-body: 13px;
-  --font-size-heading-sm: 15px;
-  --font-size-heading-lg: 30px;
+  /* Surfaces: content, chrome, and a second neutral for side regions */
+  --bg-chrome: #f5f5f7;
+  --bg-ide-panel: #f5f5f7;
+  --bg-surface: #ffffff;
+  --bg-sunken: #f5f5f7;
+  --ed-pad-y: 8px;
 
-  /* Border Radii */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 14px;
+  /* Control fills and interaction states */
+  --bg-control: rgba(0, 0, 0, 0.05);
+  --bg-control-hover: rgba(0, 0, 0, 0.09);
+  --bg-control-active: rgba(0, 0, 0, 0.14);
+  --bg-hover: rgba(0, 0, 0, 0.055);
+  --bg-selected: color-mix(in srgb, var(--tint) 15%, transparent);
+  --bg-accent-subtle: color-mix(in srgb, var(--tint) 11%, transparent);
+  --bg-scrim: rgba(0, 0, 0, 0.28);
+
+  /* Separators */
+  --border-subtle: rgba(0, 0, 0, 0.07);
+  --border-strong: rgba(0, 0, 0, 0.2);
+
+  /* Text */
+  --text-faint: #717177;
+  --text-on-accent: #ffffff;
+
+  /* The single tint. `--tint` is for text and icons, `--accent-primary` for fills. */
+  --tint: #0071e3;
+  --tint-hover: #0077ed;
+  --accent-primary-hover: #0077ed;
+  --accent-primary-active: #0062c3;
+  --accent-primary-text: #ffffff;
+
+  /* Semantic state */
+  --state-ok: #248a3d;
+  --state-warn: #b25e00;
+  --state-error: #d70015;
+
+  /* Source control and diff */
+  --git-modified: #b25e00;
+  --git-added: #248a3d;
+  --git-deleted: #d70015;
+  --text-git-modified: #b25e00;
+  --bg-diff-add: rgba(36, 138, 61, 0.13);
+  --diff-add-bg: rgba(36, 138, 61, 0.13);
+  --bg-diff-remove: rgba(215, 0, 21, 0.1);
+  --diff-remove-bg: rgba(215, 0, 21, 0.1);
+  --text-diff-add: #1c7a33;
+  --text-diff-remove: #c20013;
+
+  /* CLI identity colors (always a dot plus the name, never color alone) */
+  --cli-codex: #1d1d1f;
+  --cli-antigravity: #2f5fd0;
+  --cli-deepseek: #6b4fd0;
+
+  /* Syntax (Xcode "Default" light) */
+  --syn-keyword: #ad3da4;
+  --syn-string: #d12f1b;
+  --syn-number: #272ad8;
+  --syn-comment: #6c7a86;
+  --syn-type: #2f6a73;
+  --syn-func: #326d74;
+  --syn-attr: #836c28;
+  --syn-punct: #5f5f66;
+  --syn-property: #1c464a;
+
+  /* Editor surfaces */
+  --editor-current-line: rgba(0, 0, 0, 0.04);
+  --editor-gutter-ink: #76767e;
+  --editor-gutter-ink-active: #3c3c43;
+
+  /* Terminal */
+  --term-bg: #ffffff;
+  --term-prompt: #248a3d;
+
+  /* Scrollbars */
+  --scrollbar-thumb: rgba(0, 0, 0, 0.26);
+
+  /* Typography */
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', 'Segoe UI Variable Text', 'Segoe UI',
+    system-ui, sans-serif;
+  --font-mono:
+    'SF Mono', ui-monospace, 'Cascadia Code', 'Cascadia Mono', Menlo, Consolas, monospace;
+  --font-size-body: 13px;
+  --font-size-small: 12px;
+  --font-size-caption: 11px;
+  --font-size-heading-sm: 15px;
+  --font-size-heading-lg: 28px;
+
+  /* Radii: controls are small, popovers medium, pills only for tiny status */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
   --radius-pill: 9999px;
 
-  /* Layout Dimensions */
-  --sidebar-width: 216px;
-  --right-pane-width: 360px;
+  /* Layout */
+  --toolbar-height: 44px;
+  --sidebar-width: 232px;
+  --navigator-width: 260px;
+  --inspector-width: 320px;
+  --debug-height: 220px;
+  --status-height: 24px;
   --activity-bar-width: 44px;
-  --status-bar-height: 22px;
+  --right-pane-width: 320px;
+  --status-bar-height: 24px;
+
+  /* Elevation (offset + soft blur; the hairline ring is not a glow) */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.07);
+  --shadow-popover:
+    0 12px 40px -10px rgba(0, 0, 0, 0.3), 0 4px 14px -4px rgba(0, 0, 0, 0.14),
+    0 0 0 0.5px rgba(0, 0, 0, 0.16);
+  --shadow-dropdown: var(--shadow-popover);
+  --shadow-button-hover: 0 1px 2px rgba(0, 0, 0, 0.1);
+  --material-popover: rgba(255, 255, 255, 0.82);
+
+  /* Motion: state, not decoration. Exponential ease-out, 120 to 240ms. */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
+  --transition-quick: 120ms cubic-bezier(0.22, 1, 0.36, 1);
+  --transition-smooth: 200ms cubic-bezier(0.22, 1, 0.36, 1);
+  --transition-spring: 260ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 [data-theme='dark'] {
-  --bg-ground: #111915;
-  --bg-sidebar: #16211b;
-  --bg-ide-panel: #141e18;
-  --bg-surface: #1b2821;
-  --border-default: #293d32;
-  --border-subtle: #293d32;
-  --text-ink: #e8f1eb;
-  --text-muted: #93a89b;
-  --accent-primary: #3b8462;
+  color-scheme: dark;
+
+  --bg-ground: #1e1e20;
+  --bg-chrome: #2a2a2d;
+  --bg-sidebar: #232326;
+  --bg-ide-panel: #232326;
+  --bg-surface: #2c2c2f;
+  --bg-sunken: #19191b;
+
+  --bg-control: rgba(255, 255, 255, 0.08);
+  --bg-control-hover: rgba(255, 255, 255, 0.13);
+  --bg-control-active: rgba(255, 255, 255, 0.19);
+  --bg-hover: rgba(255, 255, 255, 0.07);
+  --bg-selected: color-mix(in srgb, var(--tint) 28%, transparent);
+  --bg-accent-subtle: color-mix(in srgb, var(--tint) 20%, transparent);
+  --bg-scrim: rgba(0, 0, 0, 0.5);
+
+  --border-default: rgba(255, 255, 255, 0.12);
+  --border-subtle: rgba(255, 255, 255, 0.07);
+  --border-strong: rgba(255, 255, 255, 0.22);
+
+  --text-ink: #f5f5f7;
+  --text-muted: #a8a8ae;
+  --text-faint: #8d8d94;
+  --text-on-accent: #ffffff;
+
+  --tint: #409cff;
+  --tint-hover: #70b4ff;
+  --accent-primary: #0071e3;
+  --accent-primary-hover: #409cff;
+  --accent-primary-active: #0062c3;
   --accent-primary-text: #ffffff;
-  --bg-accent-subtle: #21382b;
-  --bg-diff-add: #1b3624;
-  --diff-add-bg: #1b3624;
-  --bg-diff-remove: #3d1f22;
-  --diff-remove-bg: #3d1f22;
-  --text-diff-add: #58b886;
-  --text-diff-remove: #e57373;
-  --text-git-modified: #d9a05b;
-  --cli-codex: #e8f1eb;
+  /* Owner-supplied logo only; the interface keeps its single tint. */
+  --brand-mark-ink: #f5f5f7;
+  --brand-mark-accent: #2fbf88;
+
+  --state-ok: #30d158;
+  --state-warn: #ffb340;
+  --state-error: #ff6961;
+
+  --git-modified: #ffb340;
+  --git-added: #30d158;
+  --git-deleted: #ff6961;
+  --text-git-modified: #ffb340;
+  --bg-diff-add: rgba(48, 209, 88, 0.17);
+  --diff-add-bg: rgba(48, 209, 88, 0.17);
+  --bg-diff-remove: rgba(255, 105, 97, 0.16);
+  --diff-remove-bg: rgba(255, 105, 97, 0.16);
+  --text-diff-add: #4cd964;
+  --text-diff-remove: #ff8a82;
+
+  --cli-codex: #f5f5f7;
   --cli-antigravity: #5e8bff;
   --cli-deepseek: #9b82f3;
+
+  /* Syntax (Xcode "Default" dark) */
+  --syn-keyword: #fc5fa3;
+  --syn-string: #fc6a5d;
+  --syn-number: #d0bf69;
+  --syn-comment: #7f8c98;
+  --syn-type: #5dd8ff;
+  --syn-func: #67b7a4;
+  --syn-attr: #cc9768;
+  --syn-punct: #a8a8ae;
+  --syn-property: #a167e6;
+
+  --editor-current-line: rgba(255, 255, 255, 0.05);
+  --editor-gutter-ink: #8b8b93;
+  --editor-gutter-ink-active: #d0d0d6;
+
+  --term-bg: #1a1a1c;
+  --term-prompt: #30d158;
+
+  --scrollbar-thumb: rgba(255, 255, 255, 0.28);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-popover:
+    0 14px 44px -10px rgba(0, 0, 0, 0.7), 0 4px 14px -4px rgba(0, 0, 0, 0.4),
+    0 0 0 0.5px rgba(255, 255, 255, 0.14);
+  --shadow-dropdown: var(--shadow-popover);
+  --shadow-button-hover: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --material-popover: rgba(44, 44, 47, 0.82);
 }
+
+/* ==========================================================================
+   Base
+   ========================================================================== */
 
 *,
 *::before,
@@ -119,8 +289,14 @@ body,
   color: var(--text-ink);
   font-family: var(--font-sans);
   font-size: var(--font-size-body);
-  line-height: 1.45;
+  line-height: 1.4;
+  letter-spacing: -0.003em;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  overflow: hidden;
 }
 
 button,
@@ -130,16 +306,205 @@ select {
   font-family: inherit;
   font-size: inherit;
   color: inherit;
+  letter-spacing: inherit;
 }
 
 button {
-  cursor: pointer;
+  cursor: default;
 }
 
-button:focus-visible,
-input:focus-visible,
-textarea:focus-visible,
-[tabindex]:focus-visible {
-  outline: 2px solid var(--accent-primary);
-  outline-offset: 2px;
+/* Browser surfaces: the parts the page did not draw still carry the design. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--tint) 32%, transparent);
+}
+
+input,
+textarea {
+  caret-color: var(--tint);
+}
+
+::placeholder {
+  color: var(--text-faint);
+  opacity: 1;
+}
+
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--tint) 50%, transparent);
+  border-radius: var(--radius-xs);
+}
+
+a {
+  color: var(--tint);
+  text-underline-offset: 2px;
+}
+
+kbd {
+  font-family: var(--font-sans);
+  font-size: var(--font-size-caption);
+  color: var(--text-faint);
+  letter-spacing: 0.02em;
+}
+
+.osmium-tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ==========================================================================
+   Motion
+   ========================================================================== */
+
+@keyframes osmiumDropdownEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes osmiumFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes osmiumPillSlide {
+  from {
+    opacity: 0.8;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes osmiumSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.osmium-animate-dropdown {
+  animation: osmiumDropdownEnter 140ms var(--ease-out) both;
+  transform-origin: top left;
+}
+
+.osmium-animate-pill {
+  animation: osmiumPillSlide 200ms var(--ease-out) both;
+}
+
+.osmium-animate-fade {
+  animation: osmiumFadeIn 140ms var(--ease-out) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ----------------------------------------------------------------------------
+ * Settings: accent palettes and reading size
+ *
+ * Each palette still uses exactly one accent hue; these are owner-requested
+ * theme choices, not a second brand color. The logo has its own tokens.
+ * -------------------------------------------------------------------------- */
+
+:root {
+  --palette-blue: #0071e3;
+  --palette-teal: #0e7490;
+  --palette-forest: #1b8f62;
+  --palette-graphite: #3a3a3c;
+}
+
+:root[data-palette='teal'] {
+  --tint: #0e7490;
+  --tint-hover: #0b5f75;
+  --accent-primary: #0e7490;
+  --accent-primary-hover: #0b5f75;
+  --accent-primary-active: #094e60;
+  --accent-primary-text: #ffffff;
+  --text-on-accent: #ffffff;
+}
+
+:root[data-theme='dark'][data-palette='teal'] {
+  --tint: #22b8cf;
+  --tint-hover: #4cc9db;
+  --accent-primary: #0e7490;
+  --accent-primary-hover: #0b5f75;
+  --accent-primary-active: #094e60;
+  --accent-primary-text: #ffffff;
+  --text-on-accent: #ffffff;
+}
+
+:root[data-palette='forest'] {
+  --tint: #1b8f62;
+  --tint-hover: #157a53;
+  --accent-primary: #1b8f62;
+  --accent-primary-hover: #157a53;
+  --accent-primary-active: #116443;
+  --accent-primary-text: #ffffff;
+  --text-on-accent: #ffffff;
+}
+
+:root[data-theme='dark'][data-palette='forest'] {
+  --tint: #2fbf88;
+  --tint-hover: #4fd39f;
+  --accent-primary: #1b8f62;
+  --accent-primary-hover: #157a53;
+  --accent-primary-active: #116443;
+  --accent-primary-text: #ffffff;
+  --text-on-accent: #ffffff;
+}
+
+:root[data-palette='graphite'] {
+  --tint: #3a3a3c;
+  --tint-hover: #4a4a4c;
+  --accent-primary: #3a3a3c;
+  --accent-primary-hover: #4a4a4c;
+  --accent-primary-active: #2c2c2e;
+  --accent-primary-text: #ffffff;
+  --text-on-accent: #ffffff;
+}
+
+:root[data-theme='dark'][data-palette='graphite'] {
+  --tint: #c7c7cc;
+  --tint-hover: #e5e5ea;
+  --accent-primary: #48484a;
+  --accent-primary-hover: #5a5a5c;
+  --accent-primary-active: #3a3a3c;
+  --accent-primary-text: #ffffff;
+  --text-on-accent: #ffffff;
+}
+
+:root[data-font-size='small'] {
+  --font-size-body: 12px;
+  --font-size-small: 11px;
+  --font-size-caption: 10px;
+}
+
+:root[data-font-size='large'] {
+  --font-size-body: 14px;
+  --font-size-small: 13px;
+  --font-size-caption: 12px;
 }

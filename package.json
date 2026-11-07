@@ -6,8 +6,9 @@
   "type": "module",
   "packageManager": "pnpm@12.18.0",
   "scripts": {
-    "build": "pnpm --filter @osmium/core build && pnpm --filter @osmium/ide-core build && pnpm --filter @osmium/adapters build && pnpm --filter @osmium/mock-cli build && pnpm --filter @osmium/ui build && pnpm --filter @osmium/desktop build",
-    "dev": "pnpm --filter @osmium/desktop dev",
+    "build": "pnpm build:host && pnpm --filter @osmium/core build && pnpm --filter @osmium/ide-core build && pnpm --filter @osmium/adapters build && pnpm --filter @osmium/mock-cli build && pnpm --filter @osmium/ui build && pnpm --filter @osmium/desktop build",
+    "build:host": "cargo build -p osmium-adapter-host -p osmium-mock-cli",
+    "dev": "pnpm build:host && pnpm --filter @osmium/desktop dev",
     "typecheck": "pnpm -r typecheck",
     "lint": "eslint .",
     "format:check": "prettier --check \"apps/**/*.{ts,tsx,css}\" \"packages/**/*.{ts,tsx,css}\" \"e2e/*.ts\"", "format": "prettier --write \"apps/**/*.{ts,tsx,css}\" \"packages/**/*.{ts,tsx,css}\" \"e2e/*.ts\"",

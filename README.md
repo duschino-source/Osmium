@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="apps/desktop/build/icon.svg" width="72" height="72" alt="OsmiumIDE mark" />
+</p>
+
 # OsmiumIDE (Osmium)
 
 > A calm, powerful desktop IDE and multi-CLI orchestrator that drives the coding CLIs you already pay for (Codex CLI, Antigravity, DeepSeek CLI, and others) from one place.

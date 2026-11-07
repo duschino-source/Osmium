@@ -2,12 +2,23 @@
 node_modules/
 dist/
 out/
+target/
 .osmium/
 coverage/
 test-results/
 playwright-report/
 *.tsbuildinfo
 .DS_Store
+
+# Local agent/debug artifacts (not product source)
+electron_debug.log
+capture_screen_launcher.ps1
+daemon_run.ps1
+focus_osmium.ps1
+inspect_windows.ps1
+run.cmd
+take_screenshot.ps1
+CHANGES_REVIEW.md
 
 # Orchestrator / Agent Workspace State
 .agents/

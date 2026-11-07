@@ -15,7 +15,7 @@
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json && chmod +x dist/index.js dist/cli.js",
+    "build": "tsc -p tsconfig.json && node -e \"try{const fs=require('fs');fs.chmodSync('dist/index.js',0o755);fs.chmodSync('dist/cli.js',0o755)}catch(e){}\"",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {

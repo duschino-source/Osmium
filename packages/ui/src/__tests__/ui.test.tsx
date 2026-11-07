@@ -10,21 +10,24 @@ import { CliBadge, Composer, EditedFilesCard, ApprovalPrompt } from '../index.js
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 describe('@osmium/ui tokens & components', () => {
-  it('declares local bundled Inter @font-face and Section 7 CSS variables in tokens.css', () => {
+  it('declares local bundled Inter @font-face and DESIGN.md CSS variables in tokens.css', () => {
     const tokensCss = fs.readFileSync(path.resolve(__dirname, '../tokens.css'), 'utf8');
     expect(tokensCss).toContain("font-family: 'Inter'");
     expect(tokensCss).toContain("url('./fonts/Inter-Regular.woff2')");
     expect(tokensCss).not.toMatch(/https?:\/\//i);
 
-    expect(tokensCss.toLowerCase()).toContain('--bg-ground: #f6f8f5');
-    expect(tokensCss.toLowerCase()).toContain('--bg-sidebar: #eaf1e8');
-    expect(tokensCss.toLowerCase()).toContain('--border-default: #d2dfd0');
-    expect(tokensCss.toLowerCase()).toContain('--text-ink: #1b2b22');
-    expect(tokensCss.toLowerCase()).toContain('--text-muted: #566a5e');
-    expect(tokensCss.toLowerCase()).toContain('--accent-primary: #2f6b4f');
-    expect(tokensCss.toLowerCase()).toContain('--bg-diff-add: #e3f3e2');
-    expect(tokensCss.toLowerCase()).toContain('--bg-diff-remove: #f8e4e4');
-    expect(tokensCss.toLowerCase()).toContain('--cli-codex: #1b2b22');
+    // DESIGN.md section 2: neutral Apple-material palette, one tint (the
+    // approved revamp replaced the legacy green baseline).
+    expect(tokensCss.toLowerCase()).toContain('--bg-ground: #ffffff');
+    expect(tokensCss.toLowerCase()).toContain('--bg-sidebar: #f5f5f7');
+    expect(tokensCss.toLowerCase()).toContain('--border-default: #d1d1d6');
+    expect(tokensCss.toLowerCase()).toContain('--text-ink: #1d1d1f');
+    expect(tokensCss.toLowerCase()).toContain('--text-muted: #6e6e73');
+    expect(tokensCss.toLowerCase()).toContain('--accent-primary: #0071e3');
+    expect(tokensCss.toLowerCase()).toContain('--tint: #0071e3');
+    expect(tokensCss.toLowerCase()).toContain('--bg-diff-add: rgba(36, 138, 61, 0.13)');
+    expect(tokensCss.toLowerCase()).toContain('--bg-diff-remove: rgba(215, 0, 21, 0.1)');
+    expect(tokensCss.toLowerCase()).toContain('--cli-codex: #1d1d1f');
     expect(tokensCss.toLowerCase()).toContain('--cli-antigravity: #2f5fd0');
     expect(tokensCss.toLowerCase()).toContain('--cli-deepseek: #6b4fd0');
     expect(tokensCss).toMatch(/\[data-theme=['"]dark['"]\]/);

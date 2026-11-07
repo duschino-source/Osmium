@@ -4,6 +4,9 @@
 import { spawnSync } from 'node:child_process';
 
 const args = ['playwright', 'test', ...process.argv.slice(2)];
+// Some agent shells inherit ELECTRON_RUN_AS_NODE=1; Electron would then run the
+// main entry as plain Node instead of an app.
+delete process.env.ELECTRON_RUN_AS_NODE;
 const needsXvfb =
   process.platform === 'linux' && !process.env.DISPLAY && !process.env.WAYLAND_DISPLAY;
 

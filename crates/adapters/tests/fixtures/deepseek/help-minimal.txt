@@ -1,0 +1,3 @@
+deepseek CLI (synthetic test fixture) 2.0.0
+
+Usage: deepseek <prompt>

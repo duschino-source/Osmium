@@ -14,7 +14,7 @@
     "./dist/tokens.css": "./dist/tokens.css"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json && cp src/tokens.css dist/tokens.css && mkdir -p dist/fonts && cp -r src/fonts/. dist/fonts/",
+    "build": "tsc -p tsconfig.json && node -e \"const fs=require('fs'); fs.copyFileSync('src/tokens.css', 'dist/tokens.css'); fs.cpSync('src/fonts', 'dist/fonts', {recursive: true});\"",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {

@@ -1,0 +1,8 @@
+{"type":"status","state":"working"}
+{"type":"message","role":"assistant","text":"Reading the workspace. ","final":false}
+{"type":"tool","id":"tool-1","name":"read_file","status":"running","summary":"src/main.ts"}
+{"type":"tool","id":"tool-1","name":"read_file","status":"done","summary":"src/main.ts","durationSec":0.2}
+{"type":"file-edit","path":"src/main.ts","added":4,"removed":1}
+{"type":"message","role":"assistant","text":"Updated src/main.ts.","final":true}
+{"type":"usage","limitHit":false,"note":"tokens 42"}
+{"type":"status","state":"idle"}

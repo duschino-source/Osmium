@@ -1,12 +1,12 @@
 import type {
   AgentEvent,
-  ApprovalMode,
   Capabilities,
   CheckpointSummary,
   CliDetectionResult,
   CliId,
   CliUsageStats,
   ExtensionManifest,
+  OsmiumSettings,
   ProjectConfig,
   ProjectSummary,
   SessionSummary,
@@ -14,6 +14,9 @@ import type {
   TeamworkPlan,
   TeamworkRunState,
 } from '@osmium/core';
+
+export type { OsmiumSettings, ThemeMode, ThemePalette } from '@osmium/core';
+export { DEFAULT_OSMIUM_SETTINGS } from '@osmium/core';
 
 export interface FileTreeNode {
   name: string;
@@ -173,16 +176,6 @@ export interface WorkspaceLayoutState {
   splitDirection?: 'none' | 'right' | 'down';
 }
 
-export interface OsmiumSettings {
-  theme: 'light' | 'dark';
-  fontSize: number;
-  formatOnSave: boolean;
-  autoSave: boolean;
-  defaultApprovalMode: ApprovalMode;
-  telemetryOptIn: boolean;
-  keybindings: Record<string, string>;
-}
-
 export interface PlanChecklistItem {
   id: string;
   title: string;
@@ -213,6 +206,7 @@ export interface OsmiumBridge {
     ): Promise<SessionSummary>;
     send(sessionId: string, prompt: string, attachments?: string[]): Promise<void>;
     cancel(sessionId: string): Promise<void>;
+    close(sessionId: string): Promise<void>;
     respondToApproval(
       sessionId: string,
       approvalId: string,
@@ -345,6 +339,7 @@ export const IPC_CHANNELS = {
   SESSION_START: 'session:start',
   SESSION_SEND: 'session:send',
   SESSION_CANCEL: 'session:cancel',
+  SESSION_CLOSE: 'session:close',
   SESSION_RESPOND_APPROVAL: 'session:respondToApproval',
   SESSION_SWITCH_CLI: 'session:switchCli',
   SESSION_RUN_SLASH_COMMAND: 'session:runSlashCommand',

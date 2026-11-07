@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="OsmiumIDE mark">
+  <g fill="none" stroke="#0E1A14" stroke-width="11" stroke-linejoin="miter">
+    <path d="M28.82 32L60 14L91.18 32" />
+    <path d="M99.84 47V83L68.66 101" />
+    <path d="M51.34 101L20.16 83V47" />
+  </g>
+  <path d="M60 47.5L70.83 53.75V66.25L60 72.5L49.17 66.25V53.75Z" fill="#1B8F62" />
+</svg>

@@ -13,6 +13,7 @@ const osmiumBridge = {
     send: (sessionId: string, prompt: string, attachments?: string[]) =>
       ipcRenderer.invoke('session:send', sessionId, prompt, attachments),
     cancel: (sessionId: string) => ipcRenderer.invoke('session:cancel', sessionId),
+    close: (sessionId: string) => ipcRenderer.invoke('session:close', sessionId),
     respondToApproval: (
       sessionId: string,
       approvalId: string,
@@ -116,6 +117,13 @@ const osmiumBridge = {
     terminalResize: (id: string, cols: number, rows: number) =>
       ipcRenderer.invoke('ide:terminalResize', id, cols, rows),
     terminalClose: (id: string) => ipcRenderer.invoke('ide:terminalClose', id),
+    onTerminalData: (cb: (payload: { sessionId: string; data: string }) => void) => {
+      const listener = (_event: unknown, payload: any) => cb(payload);
+      ipcRenderer.on('ide:terminalData', listener);
+      return () => {
+        ipcRenderer.removeListener('ide:terminalData', listener);
+      };
+    },
     lspStatus: (cwd: string) => ipcRenderer.invoke('ide:lspStatus', cwd),
     lspRequest: (cwd: string, method: string, params?: unknown) =>
       ipcRenderer.invoke('ide:lspRequest', cwd, method, params),
@@ -138,6 +146,12 @@ const osmiumBridge = {
       ipcRenderer.invoke('ide:saveLayout', projectId, layout),
     getSettings: () => ipcRenderer.invoke('ide:getSettings'),
     saveSettings: (settings: unknown) => ipcRenderer.invoke('ide:saveSettings', settings),
+  },
+  windowControls: {
+    minimize: () => ipcRenderer.invoke('window:minimize'),
+    maximize: () => ipcRenderer.invoke('window:maximize'),
+    close: () => ipcRenderer.invoke('window:close'),
+    isMaximized: () => ipcRenderer.invoke('window:isMaximized'),
   },
 };
 

@@ -1,0 +1,34 @@
+[package]
+name = "osmium-mock-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+default-run = "osmium-mock-cli"
+
+[[bin]]
+name = "osmium-mock-cli"
+path = "src/main.rs"
+
+[[bin]]
+name = "mock-cli"
+path = "src/bin/mock_cli.rs"
+
+[lib]
+name = "osmium_mock_cli"
+path = "src/lib.rs"
+
+[dependencies]
+osmium-core = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+clap = { workspace = true }
+regex = { workspace = true }
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+dunce = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }

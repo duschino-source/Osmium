@@ -1,6 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import type { ApprovalMode, CliId } from '@osmium/core';
-import { getCliColor, getCliDisplayName } from '@osmium/adapters';
+import { getCliCssVariable, getCliDisplayName } from '@osmium/adapters';
+import { Icon } from './ide/Icon.js';
+
+export { Icon } from './ide/Icon.js';
+export type { IconName } from './ide/Icon.js';
+
+/* ----------------------------------------------------------------------------
+ * CliBadge
+ * "A CLI is always shown as a colored dot plus its name, never by color alone."
+ * -------------------------------------------------------------------------- */
 
 export interface CliBadgeProps {
   cliId: CliId;
@@ -11,10 +20,6 @@ export interface CliBadgeProps {
   'data-testid'?: string;
 }
 
-/**
- * Renders a CLI identity badge with a colored dot + CLI name.
- * Per Section 7: "A CLI is always shown as a colored dot plus its name, never by color alone."
- */
 export const CliBadge: React.FC<CliBadgeProps> = ({
   cliId,
   displayName,
@@ -24,59 +29,45 @@ export const CliBadge: React.FC<CliBadgeProps> = ({
   'data-testid': testId,
 }) => {
   const name = displayName ?? getCliDisplayName(cliId);
-  const dotColor = getCliColor(cliId);
   const fullLabel = roleLabel ? `${name} · ${roleLabel}` : name;
-
-  const badgeStyle: React.CSSProperties = {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '7px',
-    padding: '5px 12px',
-    borderRadius: 'var(--radius-pill, 9999px)',
-    backgroundColor: 'var(--bg-surface)',
-    border: '1px solid var(--border-default)',
-    color: 'var(--text-ink)',
-    fontSize: '12.5px',
-    fontWeight: 600,
-    lineHeight: 1.2,
-    whiteSpace: 'nowrap',
-  };
-
-  const dotStyle: React.CSSProperties = {
-    width: '8px',
-    height: '8px',
-    borderRadius: '50%',
-    backgroundColor: dotColor,
-    flexShrink: 0,
-    display: 'inline-block',
-  };
+  const content = (
+    <>
+      <span
+        aria-hidden="true"
+        className="osmium-cli-dot os-dot"
+        data-cli-id={cliId}
+        style={{ backgroundColor: getCliCssVariable(cliId) }}
+      />
+      <span className="osmium-cli-name">{fullLabel}</span>
+    </>
+  );
 
   if (onClick) {
     return (
       <button
         type="button"
         onClick={onClick}
-        style={badgeStyle}
-        className={`osmium-cli-badge ${className}`.trim()}
+        className={`osmium-cli-badge os-badge os-badge-button ${className}`.trim()}
         data-testid={testId ?? `cli-badge-${cliId}`}
       >
-        <span aria-hidden="true" className="osmium-cli-dot" data-cli-id={cliId} style={dotStyle} />
-        <span className="osmium-cli-name">{fullLabel}</span>
+        {content}
       </button>
     );
   }
 
   return (
     <span
-      style={badgeStyle}
-      className={`osmium-cli-badge ${className}`.trim()}
+      className={`osmium-cli-badge os-badge ${className}`.trim()}
       data-testid={testId ?? `cli-badge-${cliId}`}
     >
-      <span aria-hidden="true" className="osmium-cli-dot" data-cli-id={cliId} style={dotStyle} />
-      <span className="osmium-cli-name">{fullLabel}</span>
+      {content}
     </span>
   );
 };
+
+/* ----------------------------------------------------------------------------
+ * Button
+ * -------------------------------------------------------------------------- */
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'default' | 'primary' | 'ghost' | 'dashed';
@@ -86,84 +77,42 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 export const Button: React.FC<ButtonProps> = ({
   variant = 'default',
   size = 'md',
-  style,
   children,
   className = '',
   ...rest
-}) => {
-  const baseStyle: React.CSSProperties = {
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '6px',
-    borderRadius: variant === 'dashed' ? 'var(--radius-pill, 9999px)' : 'var(--radius-sm, 8px)',
-    padding: size === 'sm' ? '4px 10px' : '6px 14px',
-    fontSize: size === 'sm' ? '12px' : '13px',
-    fontWeight: variant === 'primary' ? 600 : 500,
-    lineHeight: 1.25,
-    transition: 'background-color 120ms ease, border-color 120ms ease',
-    backgroundColor:
-      variant === 'primary'
-        ? 'var(--accent-primary)'
-        : variant === 'ghost' || variant === 'dashed'
-          ? 'transparent'
-          : 'var(--bg-surface)',
-    color:
-      variant === 'primary'
-        ? 'var(--accent-primary-text, #FFFFFF)'
-        : variant === 'dashed'
-          ? 'var(--text-muted)'
-          : 'var(--text-ink)',
-    border:
-      variant === 'primary'
-        ? '1px solid var(--accent-primary)'
-        : variant === 'dashed'
-          ? '1px dashed var(--border-default)'
-          : variant === 'ghost'
-            ? '1px solid transparent'
-            : '1px solid var(--border-default)',
-    ...style,
-  };
-
-  return (
-    <button
-      type="button"
-      style={baseStyle}
-      className={`osmium-btn osmium-btn-${variant} ${className}`.trim()}
-      {...rest}
-    >
-      {children}
-    </button>
-  );
-};
+}) => (
+  <button
+    type="button"
+    className={`os-btn os-btn-${variant} os-btn-${size} ${className}`.trim()}
+    {...rest}
+  >
+    {children}
+  </button>
+);
 
 export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   padding?: string;
 }
 
 export const Card: React.FC<CardProps> = ({
-  padding = '14px 16px',
+  padding,
   style,
   children,
   className = '',
   ...rest
-}) => {
-  return (
-    <div
-      style={{
-        backgroundColor: 'var(--bg-surface)',
-        border: '1px solid var(--border-default)',
-        borderRadius: 'var(--radius-md, 12px)',
-        padding,
-        ...style,
-      }}
-      className={`osmium-card ${className}`.trim()}
-      {...rest}
-    >
-      {children}
-    </div>
-  );
-};
+}) => (
+  <div
+    className={`os-card ${className}`.trim()}
+    style={padding ? { padding, ...style } : style}
+    {...rest}
+  >
+    {children}
+  </div>
+);
+
+/* ----------------------------------------------------------------------------
+ * Slash commands
+ * -------------------------------------------------------------------------- */
 
 export interface SlashCommandItem {
   command: string;
@@ -178,6 +127,14 @@ export const DEFAULT_SLASH_COMMANDS: SlashCommandItem[] = [
   { command: '/undo', description: 'Restore previous git checkpoint' },
 ];
 
+export const filterSlashCommands = (
+  query: string,
+  commands: SlashCommandItem[] = DEFAULT_SLASH_COMMANDS,
+): SlashCommandItem[] => {
+  const normalized = query.trim().toLowerCase();
+  return commands.filter((item) => item.command.toLowerCase().startsWith(normalized));
+};
+
 export interface SlashCommandMenuProps {
   query: string;
   commands?: SlashCommandItem[];
@@ -191,32 +148,15 @@ export const SlashCommandMenu: React.FC<SlashCommandMenuProps> = ({
   selectedIndex = 0,
   onSelect,
 }) => {
-  const normalizedQuery = query.trim().toLowerCase();
-  const filtered = commands.filter((item) =>
-    item.command.toLowerCase().startsWith(normalizedQuery),
-  );
-
-  if (filtered.length === 0) {
-    return null;
-  }
+  const filtered = filterSlashCommands(query, commands);
+  if (filtered.length === 0) return null;
 
   return (
     <div
       role="listbox"
       aria-label="Slash commands"
       data-testid="slash-command-menu"
-      style={{
-        backgroundColor: 'var(--bg-surface)',
-        border: '1px solid var(--border-default)',
-        borderRadius: 'var(--radius-md, 12px)',
-        padding: '6px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '2px',
-        width: '372px',
-        maxWidth: '100%',
-        boxShadow: '0 4px 16px rgba(27, 43, 34, 0.06)',
-      }}
+      className="os-menu os-slash-menu osmium-animate-dropdown"
     >
       {filtered.map((item, idx) => {
         const isSelected = idx === selectedIndex;
@@ -227,30 +167,13 @@ export const SlashCommandMenu: React.FC<SlashCommandMenuProps> = ({
             role="option"
             aria-selected={isSelected}
             data-testid={`slash-option-${item.command.slice(1)}`}
+            data-active={isSelected || undefined}
+            className="os-menu-item"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => onSelect(item.command)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              width: '100%',
-              textAlign: 'left',
-              padding: '6px 10px',
-              borderRadius: 'var(--radius-sm, 8px)',
-              border: 'none',
-              backgroundColor: isSelected ? 'var(--bg-sidebar)' : 'transparent',
-              color: 'var(--text-ink)',
-              fontWeight: isSelected ? 600 : 400,
-            }}
           >
-            <span
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontWeight: isSelected ? 700 : 500,
-              }}
-            >
-              {item.command}
-            </span>
-            <span>{item.description}</span>
+            <span className="os-slash-command">{item.command}</span>
+            <span className="os-menu-description">{item.description}</span>
           </button>
         );
       })}
@@ -258,49 +181,187 @@ export const SlashCommandMenu: React.FC<SlashCommandMenuProps> = ({
   );
 };
 
+/* ----------------------------------------------------------------------------
+ * ContextChip
+ * -------------------------------------------------------------------------- */
+
 export interface ContextChipProps {
   label: string;
   onRemove?: () => void;
 }
 
-export const ContextChip: React.FC<ContextChipProps> = ({ label, onRemove }) => {
+export const ContextChip: React.FC<ContextChipProps> = ({ label, onRemove }) => (
+  <span data-testid={`context-chip-${label}`} className="os-chip osmium-animate-fade">
+    <span>{label.startsWith('@') ? label : `@${label}`}</span>
+    {onRemove && (
+      <button
+        type="button"
+        aria-label={`Remove ${label}`}
+        onClick={onRemove}
+        className="os-chip-remove"
+      >
+        <Icon name="x" size={10} strokeWidth={2} />
+      </button>
+    )}
+  </span>
+);
+
+/* ----------------------------------------------------------------------------
+ * DropdownMenu
+ * -------------------------------------------------------------------------- */
+
+export interface DropdownItem<T = string> {
+  key: T;
+  label: string;
+  description?: string;
+  icon?: React.ReactNode;
+  dotColor?: string;
+  /** Right-aligned hint, typically a keyboard shortcut. */
+  badge?: string;
+  disabled?: boolean;
+  separatorBefore?: boolean;
+}
+
+export interface DropdownMenuProps<T = string> {
+  isOpen: boolean;
+  onClose: () => void;
+  items: DropdownItem<T>[];
+  selectedKey?: T;
+  onSelect: (key: T) => void;
+  style?: React.CSSProperties;
+  align?: 'left' | 'right';
+  placement?: 'top' | 'bottom';
+  title?: string;
+  'data-testid'?: string;
+}
+
+export const DropdownMenu = <T extends string = string>({
+  isOpen,
+  onClose,
+  items,
+  selectedKey,
+  onSelect,
+  style,
+  align = 'left',
+  placement = 'top',
+  title,
+  'data-testid': testId,
+}: DropdownMenuProps<T>) => {
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleMouseDown = (e: MouseEvent) => {
+      const menu = menuRef.current;
+      if (!menu) return;
+      const target = e.target as Node;
+      // The trigger lives in the same wrapper; it toggles the menu itself.
+      if (menu.contains(target) || menu.parentElement?.contains(target)) return;
+      onClose();
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('mousedown', handleMouseDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleMouseDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onClose]);
+
+  useLayoutEffect(() => {
+    if (isOpen) menuRef.current?.focus({ preventScroll: true });
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  const hasSelection = selectedKey !== undefined;
+
+  const onMenuKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const enabled = Array.from(
+      menuRef.current?.querySelectorAll<HTMLButtonElement>(
+        'button[role="menuitem"]:not(:disabled)',
+      ) ?? [],
+    );
+    if (enabled.length === 0) return;
+    const current = enabled.indexOf(document.activeElement as HTMLButtonElement);
+    let next = -1;
+    if (e.key === 'ArrowDown') next = current < 0 ? 0 : (current + 1) % enabled.length;
+    else if (e.key === 'ArrowUp') next = current <= 0 ? enabled.length - 1 : current - 1;
+    else if (e.key === 'Home') next = 0;
+    else if (e.key === 'End') next = enabled.length - 1;
+    if (next >= 0) {
+      e.preventDefault();
+      enabled[next]?.focus();
+    }
+  };
+
   return (
-    <span
-      data-testid={`context-chip-${label}`}
+    <div
+      ref={menuRef}
+      role="menu"
+      tabIndex={-1}
+      data-testid={testId || 'dropdown-menu'}
+      data-placement={placement}
+      className="os-menu os-dropdown osmium-animate-dropdown"
+      onKeyDown={onMenuKeyDown}
       style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '4px',
-        padding: '2px 10px',
-        borderRadius: 'var(--radius-pill, 9999px)',
-        backgroundColor: 'var(--bg-surface)',
-        border: '1px solid var(--border-default)',
-        fontSize: '11.5px',
-        fontWeight: 600,
-        color: 'var(--text-ink)',
+        ...(placement === 'bottom' ? { top: 'calc(100% + 4px)' } : { bottom: 'calc(100% + 6px)' }),
+        ...(align === 'left' ? { left: 0 } : { right: 0 }),
+        ...style,
       }}
     >
-      <span>{label.startsWith('@') ? label : `@${label}`}</span>
-      {onRemove && (
-        <button
-          type="button"
-          aria-label={`Remove ${label}`}
-          onClick={onRemove}
-          style={{
-            border: 'none',
-            background: 'transparent',
-            padding: '0 2px',
-            fontSize: '12px',
-            color: 'var(--text-muted)',
-            lineHeight: 1,
-          }}
-        >
-          ×
-        </button>
-      )}
-    </span>
+      {title && <div className="os-menu-title">{title}</div>}
+      {items.map((item) => {
+        const isSelected = selectedKey === item.key;
+        return (
+          <React.Fragment key={item.key}>
+            {item.separatorBefore && <div className="os-menu-separator" role="separator" />}
+            <button
+              type="button"
+              role="menuitem"
+              disabled={item.disabled}
+              data-testid={`dropdown-item-${item.key}`}
+              data-selected={isSelected || undefined}
+              className="os-menu-item"
+              onClick={(e) => {
+                e.stopPropagation();
+                onSelect(item.key);
+                onClose();
+              }}
+            >
+              {hasSelection && (
+                <span className="os-menu-check" aria-hidden="true">
+                  {isSelected && <Icon name="check" size={13} strokeWidth={2} />}
+                </span>
+              )}
+              {item.dotColor && (
+                <span
+                  className="os-dot"
+                  style={{ backgroundColor: item.dotColor, borderRadius: '50%' }}
+                  aria-hidden="true"
+                />
+              )}
+              {item.icon && <span className="os-menu-icon">{item.icon}</span>}
+              <span className="os-menu-body">
+                <span className="os-menu-label">{item.label}</span>
+                {item.description && (
+                  <span className="os-menu-description">{item.description}</span>
+                )}
+              </span>
+              {item.badge && <span className="os-menu-shortcut">{item.badge}</span>}
+            </button>
+          </React.Fragment>
+        );
+      })}
+    </div>
   );
 };
+
+/* ----------------------------------------------------------------------------
+ * Composer
+ * -------------------------------------------------------------------------- */
 
 export interface ComposerProps {
   value?: string;
@@ -311,11 +372,16 @@ export interface ComposerProps {
   approvalMode?: ApprovalMode;
   routingMode?: string;
   contextChips?: string[];
+  compact?: boolean;
+  disabled?: boolean;
   onChange?: (value: string) => void;
   onSend?: (value: string) => void;
   onApprovalModeChange?: (mode: ApprovalMode) => void;
+  onCliChange?: (cliId: CliId) => void;
   onCliClick?: () => void;
+  onRoutingModeChange?: (mode: string) => void;
   onAttachClick?: () => void;
+  onAttachAction?: (action: 'file' | 'folder' | 'git' | 'clear') => void;
   onRemoveChip?: (chip: string) => void;
 }
 
@@ -324,6 +390,17 @@ const APPROVAL_LABELS: Record<ApprovalMode, string> = {
   'auto-edit': 'Auto-edit',
   'full-auto': 'Full-auto',
 };
+
+/** Semantic state tokens: how much the CLI may do without asking. */
+export const APPROVAL_DOT_COLORS: Record<ApprovalMode, string> = {
+  ask: 'var(--state-ok)',
+  'auto-edit': 'var(--state-warn)',
+  'full-auto': 'var(--state-error)',
+};
+
+const PopupChevron: React.FC = () => (
+  <Icon name="chevronUpDown" size={11} strokeWidth={2} className="os-popup-chevron" />
+);
 
 export const Composer: React.FC<ComposerProps> = ({
   value: controlledValue,
@@ -334,70 +411,78 @@ export const Composer: React.FC<ComposerProps> = ({
   approvalMode = 'ask',
   routingMode = 'Auto',
   contextChips = [],
+  compact = false,
+  disabled = false,
   onChange,
   onSend,
   onApprovalModeChange,
+  onCliChange,
   onCliClick,
+  onRoutingModeChange,
   onAttachClick,
+  onAttachAction,
   onRemoveChip,
 }) => {
   const [internalValue, setInternalValue] = useState(defaultValue);
+  const [openMenu, setOpenMenu] = useState<'cli' | 'approval' | 'routing' | 'attach' | null>(null);
+  const [slashIndex, setSlashIndex] = useState(0);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const text = controlledValue !== undefined ? controlledValue : internalValue;
 
   const updateText = (next: string) => {
-    if (controlledValue === undefined) {
-      setInternalValue(next);
-    }
+    if (controlledValue === undefined) setInternalValue(next);
     onChange?.(next);
+    setSlashIndex(0);
   };
 
-  const showSlashMenu = text.trimStart().startsWith('/') && !text.trimStart().includes(' ');
+  const trimmedStart = text.trimStart();
+  const showSlashMenu = trimmedStart.startsWith('/') && !trimmedStart.includes(' ');
+  const slashMatches = showSlashMenu ? filterSlashCommands(trimmedStart) : [];
   const cliName = getCliDisplayName(activeCliId);
   const cliButtonLabel = activeCliRole ? `${cliName} · ${activeCliRole}` : cliName;
+  const canSend = text.trim().length > 0 && !disabled;
 
-  const cycleApprovalMode = () => {
-    const order: ApprovalMode[] = ['ask', 'auto-edit', 'full-auto'];
-    const next = order[(order.indexOf(approvalMode) + 1) % order.length];
-    onApprovalModeChange?.(next);
-  };
+  // Grow with content up to ~8 lines, then scroll. Home mounts this composer
+  // while it is display:none in Code mode; a hidden textarea reports
+  // scrollHeight 0, so never write a 0px height (the CSS rows=2 default is
+  // correct until the surface is visible and text changes).
+  useLayoutEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    const nextHeight = Math.min(el.scrollHeight, 8 * 20);
+    if (nextHeight > 0) el.style.height = `${nextHeight}px`;
+  }, [text]);
 
   const handleSend = () => {
     const trimmed = text.trim();
-    if (!trimmed) return;
+    if (!trimmed || disabled) return;
     onSend?.(trimmed);
-    if (controlledValue === undefined) {
-      setInternalValue('');
-    }
+    if (controlledValue === undefined) setInternalValue('');
   };
 
+  const toggleMenu = (menu: 'cli' | 'approval' | 'routing' | 'attach') =>
+    setOpenMenu((current) => (current === menu ? null : menu));
+
   return (
-    <div
-      className="osmium-composer-wrapper"
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '8px',
-        width: '100%',
-      }}
-    >
-      {showSlashMenu && (
-        <SlashCommandMenu query={text.trimStart()} onSelect={(cmd) => updateText(`${cmd} `)} />
+    <div className="os-composer-wrap osmium-composer-wrapper">
+      {showSlashMenu && slashMatches.length > 0 && (
+        <SlashCommandMenu
+          query={trimmedStart}
+          selectedIndex={Math.min(slashIndex, slashMatches.length - 1)}
+          onSelect={(cmd) => {
+            updateText(`${cmd} `);
+            inputRef.current?.focus();
+          }}
+        />
       )}
       <div
         data-testid="composer-box"
-        className="osmium-composer"
-        style={{
-          backgroundColor: 'var(--bg-surface)',
-          border: '1px solid var(--border-default)',
-          borderRadius: 'var(--radius-lg, 14px)',
-          padding: '14px 16px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '12px',
-        }}
+        className="os-composer osmium-composer"
+        data-compact={compact || undefined}
       >
         {contextChips.length > 0 && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+          <div className="os-composer-chips">
             {contextChips.map((chip) => (
               <ContextChip
                 key={chip}
@@ -408,65 +493,264 @@ export const Composer: React.FC<ComposerProps> = ({
           </div>
         )}
         <textarea
+          ref={inputRef}
           aria-label="Task prompt"
           data-testid="composer-input"
+          className="os-composer-input"
           value={text}
           placeholder={placeholder}
-          rows={2}
+          rows={compact ? 1 : 2}
           onChange={(e) => updateText(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+            if (showSlashMenu && slashMatches.length > 0) {
+              if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                setSlashIndex((i) => (i + 1) % slashMatches.length);
+                return;
+              }
+              if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                setSlashIndex((i) => (i - 1 + slashMatches.length) % slashMatches.length);
+                return;
+              }
+              if (e.key === 'Tab' || (e.key === 'Enter' && !e.shiftKey)) {
+                e.preventDefault();
+                const pick = slashMatches[Math.min(slashIndex, slashMatches.length - 1)];
+                if (pick) updateText(`${pick.command} `);
+                return;
+              }
+            }
+            if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
               e.preventDefault();
               handleSend();
             }
           }}
-          style={{
-            width: '100%',
-            border: 'none',
-            resize: 'none',
-            backgroundColor: 'transparent',
-            color: 'var(--text-ink)',
-            fontSize: '13.5px',
-            lineHeight: 1.45,
-            outline: 'none',
-          }}
         />
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '8px',
-            flexWrap: 'wrap',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Button
-              aria-label="Add attachment or context"
-              data-testid="composer-attach-btn"
-              onClick={onAttachClick}
-              style={{ width: '32px', height: '30px', padding: 0 }}
-            >
-              +
-            </Button>
-            <Button data-testid="composer-approval-btn" onClick={cycleApprovalMode}>
-              {APPROVAL_LABELS[approvalMode]}
-            </Button>
+        <div className="os-composer-bar">
+          <div className="os-composer-group">
+            <div className="os-anchor">
+              <button
+                type="button"
+                aria-label="Add attachment or context"
+                aria-haspopup="menu"
+                aria-expanded={openMenu === 'attach'}
+                data-testid="composer-attach-btn"
+                className="os-icon-btn"
+                onClick={() => {
+                  toggleMenu('attach');
+                  onAttachClick?.();
+                }}
+              >
+                <Icon name="plus" size={15} strokeWidth={1.8} />
+              </button>
+              <DropdownMenu<string>
+                isOpen={openMenu === 'attach'}
+                onClose={() => setOpenMenu(null)}
+                title="Attach context"
+                align="left"
+                items={[
+                  {
+                    key: 'file',
+                    label: 'Add File',
+                    description: 'Attach file contents to prompt',
+                    icon: <Icon name="file" size={15} />,
+                  },
+                  {
+                    key: 'folder',
+                    label: 'Add Folder',
+                    description: 'Attach directory tree snapshot',
+                    icon: <Icon name="folder" size={15} />,
+                  },
+                  {
+                    key: 'git',
+                    label: 'Git Diff',
+                    description: 'Include working tree diff',
+                    icon: <Icon name="branch" size={15} />,
+                  },
+                  {
+                    key: 'clear',
+                    label: 'Clear Context',
+                    description: 'Remove all active chips',
+                    icon: <Icon name="x" size={15} />,
+                    separatorBefore: true,
+                  },
+                ]}
+                onSelect={(action) => {
+                  if (
+                    action === 'file' ||
+                    action === 'folder' ||
+                    action === 'git' ||
+                    action === 'clear'
+                  ) {
+                    onAttachAction?.(action);
+                  }
+                }}
+              />
+            </div>
+
+            <div className="os-anchor">
+              <button
+                type="button"
+                aria-haspopup="menu"
+                aria-expanded={openMenu === 'approval'}
+                data-testid="composer-approval-btn"
+                className="os-popup-btn"
+                onClick={() => toggleMenu('approval')}
+              >
+                <span
+                  className="osmium-approval-dot os-dot"
+                  style={{ backgroundColor: APPROVAL_DOT_COLORS[approvalMode] }}
+                />
+                <span>{APPROVAL_LABELS[approvalMode]}</span>
+                <PopupChevron />
+              </button>
+              <DropdownMenu<ApprovalMode>
+                isOpen={openMenu === 'approval'}
+                onClose={() => setOpenMenu(null)}
+                title="Approval policy"
+                selectedKey={approvalMode}
+                align="left"
+                items={[
+                  {
+                    key: 'ask',
+                    label: 'Ask for approval',
+                    description: 'Confirm before writing files or running terminal commands',
+                    dotColor: APPROVAL_DOT_COLORS['ask'],
+                  },
+                  {
+                    key: 'auto-edit',
+                    label: 'Auto-edit files',
+                    description: 'Auto-apply file diffs, prompt for terminal commands',
+                    dotColor: APPROVAL_DOT_COLORS['auto-edit'],
+                  },
+                  {
+                    key: 'full-auto',
+                    label: 'Full-auto',
+                    description: 'Run completely autonomously without approval prompts',
+                    dotColor: APPROVAL_DOT_COLORS['full-auto'],
+                  },
+                ]}
+                onSelect={(mode) => onApprovalModeChange?.(mode)}
+              />
+            </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Button data-testid="composer-cli-btn" onClick={onCliClick}>
-              {cliButtonLabel}
-            </Button>
-            <Button data-testid="composer-mode-btn">{routingMode}</Button>
-            <Button variant="primary" data-testid="composer-send-btn" onClick={handleSend}>
-              Send
-            </Button>
+
+          <div className="os-composer-group">
+            <div className="os-anchor">
+              <button
+                type="button"
+                aria-haspopup="menu"
+                aria-expanded={openMenu === 'cli'}
+                data-testid="composer-cli-btn"
+                className="os-popup-btn"
+                onClick={() => {
+                  toggleMenu('cli');
+                  onCliClick?.();
+                }}
+              >
+                <span
+                  className="osmium-cli-dot os-dot"
+                  style={{ backgroundColor: getCliCssVariable(activeCliId) }}
+                />
+                <span>{cliButtonLabel}</span>
+                <PopupChevron />
+              </button>
+              <DropdownMenu<CliId>
+                isOpen={openMenu === 'cli'}
+                onClose={() => setOpenMenu(null)}
+                title="Active coding CLI"
+                selectedKey={activeCliId}
+                align="right"
+                items={[
+                  {
+                    key: 'codex',
+                    label: 'Codex CLI',
+                    description: 'OpenAI official terminal agent',
+                    dotColor: getCliCssVariable('codex'),
+                  },
+                  {
+                    key: 'antigravity',
+                    label: 'Antigravity',
+                    description: 'Google DeepMind advanced coding CLI',
+                    dotColor: getCliCssVariable('antigravity'),
+                  },
+                  {
+                    key: 'deepseek',
+                    label: 'DeepSeek CLI',
+                    description: 'DeepSeek reasoning & architecture CLI',
+                    dotColor: getCliCssVariable('deepseek'),
+                  },
+                  {
+                    key: 'mock',
+                    label: 'Mock CLI',
+                    description: 'Deterministic local test engine',
+                    dotColor: getCliCssVariable('mock'),
+                  },
+                ]}
+                onSelect={(cli) => onCliChange?.(cli)}
+              />
+            </div>
+
+            <div className="os-anchor">
+              <button
+                type="button"
+                aria-haspopup="menu"
+                aria-expanded={openMenu === 'routing'}
+                data-testid="composer-mode-btn"
+                className="os-popup-btn"
+                onClick={() => toggleMenu('routing')}
+              >
+                <span>{routingMode}</span>
+                <PopupChevron />
+              </button>
+              <DropdownMenu<string>
+                isOpen={openMenu === 'routing'}
+                onClose={() => setOpenMenu(null)}
+                title="Routing"
+                selectedKey={routingMode}
+                align="right"
+                items={[
+                  {
+                    key: 'Auto',
+                    label: 'Auto-Route',
+                    description: 'Smart fallback on quota limits or execution errors',
+                  },
+                  {
+                    key: 'Pinned',
+                    label: 'Pin CLI',
+                    description: 'Lock to selected CLI with zero automatic fallback',
+                  },
+                  {
+                    key: 'Teamwork',
+                    label: 'Teamwork DAG',
+                    description: 'Decompose goal across all active CLIs in parallel',
+                  },
+                ]}
+                onSelect={(mode) => onRoutingModeChange?.(mode)}
+              />
+            </div>
+
+            <button
+              type="button"
+              aria-label="Send"
+              title="Send (Return)"
+              data-testid="composer-send-btn"
+              className="os-send-btn"
+              disabled={!canSend}
+              onClick={handleSend}
+            >
+              <Icon name="arrowUp" size={15} strokeWidth={2.2} />
+            </button>
           </div>
         </div>
       </div>
     </div>
   );
 };
+
+/* ----------------------------------------------------------------------------
+ * EditedFilesCard
+ * -------------------------------------------------------------------------- */
 
 export interface EditedFileEntry {
   path: string;
@@ -492,70 +776,53 @@ export const EditedFilesCard: React.FC<EditedFilesCardProps> = ({
   onReview,
 }) => {
   const count = totalCount ?? files.length;
-  const added = totalAdded ?? files.reduce((sum, f) => sum + f.added, 0);
-  const removed = totalRemoved ?? files.reduce((sum, f) => sum + f.removed, 0);
+  const added = totalAdded ?? files.reduce((acc, f) => acc + f.added, 0);
+  const removed = totalRemoved ?? files.reduce((acc, f) => acc + f.removed, 0);
 
   return (
-    <Card data-testid="edited-files-card">
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: '12px',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <strong style={{ color: 'var(--text-ink)' }}>
-            Edited {count} {count === 1 ? 'file' : 'files'}
-          </strong>
-          <span
-            data-testid="edited-files-added"
-            style={{ color: 'var(--text-diff-add)', fontWeight: 600 }}
-          >
+    <Card data-testid="edited-files-card" className="os-edited-card">
+      <div className="os-edited-head">
+        <div className="os-edited-title">
+          <strong>Edited {count} files</strong>
+          <span data-testid="edited-files-added" className="os-diff-stat os-diff-add">
             +{added}
           </span>
-          {removed > 0 && (
-            <span
-              data-testid="edited-files-removed"
-              style={{ color: 'var(--text-diff-remove)', fontWeight: 600 }}
-            >
-              -{removed}
-            </span>
-          )}
+          <span data-testid="edited-files-removed" className="os-diff-stat os-diff-remove">
+            -{removed}
+          </span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div className="os-edited-actions">
           <Button size="sm" data-testid="edited-files-undo-btn" onClick={onUndo}>
             Undo
           </Button>
-          <Button size="sm" data-testid="edited-files-review-btn" onClick={onReview}>
+          <Button
+            size="sm"
+            variant="primary"
+            data-testid="edited-files-review-btn"
+            onClick={onReview}
+          >
             Review
           </Button>
         </div>
       </div>
-      {files.length > 0 && (
-        <div
-          style={{
-            marginTop: '10px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '4px',
-            fontFamily: 'var(--font-mono)',
-            fontSize: '12px',
-            color: 'var(--text-muted)',
-          }}
-        >
-          {files.map((f) => (
-            <div key={f.path}>
-              <span>{f.path}</span> <span>+{f.added}</span>
-              {f.removed > 0 ? <span> -{f.removed}</span> : null}
-            </div>
-          ))}
-        </div>
-      )}
+      <div className="os-edited-list">
+        {files.map((file) => (
+          <div key={file.path} className="os-edited-row">
+            <span className="os-edited-path">{file.path}</span>
+            <span className="os-edited-delta">
+              <span className="os-diff-add-text">+{file.added}</span>{' '}
+              <span className="os-diff-remove-text">-{file.removed}</span>
+            </span>
+          </div>
+        ))}
+      </div>
     </Card>
   );
 };
+
+/* ----------------------------------------------------------------------------
+ * ApprovalPrompt
+ * -------------------------------------------------------------------------- */
 
 export interface ApprovalPromptProps {
   id: string;
@@ -564,53 +831,36 @@ export interface ApprovalPromptProps {
   onDecision: (id: string, allow: boolean, scope: 'once' | 'session') => void;
 }
 
-export const ApprovalPrompt: React.FC<ApprovalPromptProps> = ({ id, kind, detail, onDecision }) => {
-  return (
-    <Card data-testid={`approval-prompt-${id}`}>
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '10px',
-        }}
+export const ApprovalPrompt: React.FC<ApprovalPromptProps> = ({ id, kind, detail, onDecision }) => (
+  <Card data-testid={`approval-prompt-${id}`} className="os-approval">
+    <div className="os-approval-head">
+      <strong>Approval required ({kind})</strong>
+      <span className="os-approval-id">{id}</span>
+    </div>
+    <div className="os-approval-detail">{detail}</div>
+    <div className="os-approval-actions">
+      <Button
+        variant="primary"
+        size="sm"
+        data-testid="approval-allow-btn"
+        onClick={() => onDecision(id, true, 'once')}
       >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <strong style={{ color: 'var(--text-ink)' }}>Approval required ({kind})</strong>
-          <span
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: '12px',
-              color: 'var(--text-muted)',
-            }}
-          >
-            {detail}
-          </span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Button
-            variant="primary"
-            size="sm"
-            data-testid="approval-allow-btn"
-            onClick={() => onDecision(id, true, 'once')}
-          >
-            Allow
-          </Button>
-          <Button
-            size="sm"
-            data-testid="approval-deny-btn"
-            onClick={() => onDecision(id, false, 'once')}
-          >
-            Deny
-          </Button>
-          <Button
-            size="sm"
-            data-testid="approval-allow-session-btn"
-            onClick={() => onDecision(id, true, 'session')}
-          >
-            Allow for this session
-          </Button>
-        </div>
-      </div>
-    </Card>
-  );
-};
+        Allow
+      </Button>
+      <Button
+        size="sm"
+        data-testid="approval-deny-btn"
+        onClick={() => onDecision(id, false, 'once')}
+      >
+        Deny
+      </Button>
+      <Button
+        size="sm"
+        data-testid="approval-allow-session-btn"
+        onClick={() => onDecision(id, true, 'session')}
+      >
+        Allow for this session
+      </Button>
+    </div>
+  </Card>
+);

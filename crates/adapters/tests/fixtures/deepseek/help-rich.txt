@@ -1,0 +1,9 @@
+deepseek CLI (synthetic test fixture) 2.0.0
+
+Usage: deepseek [options]
+
+Options:
+  --json              Emit newline-delimited JSON events
+  --resume <id>       Resume a previous session
+  --read-only         Do not modify files
+  --usage             Print token usage
