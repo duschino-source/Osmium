@@ -1,8 +1,8 @@
-# Conductor (Argon 4) — E2E Test Infrastructure & Contract Specification (`TEST_INFRA.md`)
+# Osmium (Argon 4) — E2E Test Infrastructure & Contract Specification (`TEST_INFRA.md`)
 
 ## 1. Overview & Philosophy
 
-This document defines the requirement-driven, opaque-box **4-Tier End-to-End (E2E) Test Suite** for **Conductor (Argon 4 Desktop IDE & Multi-CLI Orchestrator)**.
+This document defines the requirement-driven, opaque-box **4-Tier End-to-End (E2E) Test Suite** for **Osmium (Argon 4 Desktop IDE & Multi-CLI Orchestrator)**.
 
 The suite covers all **24 features (`F01`–`F24`)** defined in `/home/antigravity/PROJECT.md § Feature Inventory` and `/home/antigravity/.agents/teamwork/ORIGINAL_REQUEST.md`:
 - **Tier 1 — Feature Coverage (`120` test cases)**: `5` happy-path test cases per feature across all `24` features (`T1-F01-01` .. `T1-F24-05`).
@@ -114,12 +114,12 @@ The E2E suite is designed to run progressively from Milestone 1 through Mileston
    - `docs/PLAN.md`, `docs/PROGRESS.md`, `docs/ROADMAP.md`, `docs/adapters/*.md`
 
 2. **Real System Execution (Zero Dummy Assertions)**:
-   Every test executes real OS-level operations in isolated temporary directories (`/tmp/conductor-e2e-*`, cleaned up after each test):
-   - **Real Git Plumbing**: Spawns `/usr/bin/git` to create repositories, branches (`conductor/integration`), checkpoints under `refs/conductor/checkpoints/<id>` via `GIT_INDEX_FILE` + `git write-tree` + `git commit-tree` + `git update-ref`, worktrees under `.conductor/worktrees/<task-id>`, diffs, hunk staging/applying, blame, stash, and 3-way conflict detection/resolution.
-   - **Real SQLite Storage**: Uses `better-sqlite3` (if installed in workspace `node_modules`) or `/usr/bin/sqlite3` CLI against real SQLite database files (`.conductor/conductor.db`) with the schema for `projects`, `sessions`, `session_events`, `checkpoints`, `teamwork_runs`, `teamwork_tasks`, `cli_usage`, and `workspace_layout`.
+   Every test executes real OS-level operations in isolated temporary directories (`/tmp/osmium-e2e-*`, cleaned up after each test):
+   - **Real Git Plumbing**: Spawns `/usr/bin/git` to create repositories, branches (`osmium/integration`), checkpoints under `refs/osmium/checkpoints/<id>` via `GIT_INDEX_FILE` + `git write-tree` + `git commit-tree` + `git update-ref`, worktrees under `.osmium/worktrees/<task-id>`, diffs, hunk staging/applying, blame, stash, and 3-way conflict detection/resolution.
+   - **Real SQLite Storage**: Uses `better-sqlite3` (if installed in workspace `node_modules`) or `/usr/bin/sqlite3` CLI against real SQLite database files (`.osmium/osmium.db`) with the schema for `projects`, `sessions`, `session_events`, `checkpoints`, `teamwork_runs`, `teamwork_tasks`, `cli_usage`, and `workspace_layout`.
    - **Real Ripgrep Search**: Spawns `/usr/bin/rg` for streaming regex, case-sensitive, whole-word, and glob-filtered searches across real directory trees.
    - **Real Child Processes**: Spawns `/usr/local/bin/node` child processes for `mock-cli` and CLI adapters over stdout/stdin pipes.
 
 3. **Workspace Binding vs. Progressive Contract Execution**:
    - Whenever a workspace package/file exists in `/home/antigravity/packages/*` or `/home/antigravity/apps/desktop/*`, the harness loads and tests the workspace implementation directly.
-   - When `--strict-workspace` is passed (or when `CONDUCTOR_E2E_STRICT=1` is set in Milestone 5), every test requires its corresponding workspace package in `/home/antigravity/packages/*` and `/home/antigravity/apps/desktop/*` to exist on disk and fails immediately if any workspace module is missing.
+   - When `--strict-workspace` is passed (or when `OSMIUM_E2E_STRICT=1` is set in Milestone 5), every test requires its corresponding workspace package in `/home/antigravity/packages/*` and `/home/antigravity/apps/desktop/*` to exist on disk and fails immediately if any workspace module is missing.

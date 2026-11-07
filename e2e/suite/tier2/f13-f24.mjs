@@ -120,19 +120,19 @@ export const tests = [
     tier: 2,
     feature: 13,
     features: [13],
-    title: 'Detects out-of-scope file edits in task git worktree via git diff against conductor/integration',
+    title: 'Detects out-of-scope file edits in task git worktree via git diff against osmium/integration',
     async fn(ctx = {}) {
       resolveWorkspaceFeature(ctx, 13);
       await withTempGitRepo(async (repoDir) => {
-        const wtPath = path.join(repoDir, '.conductor', 'worktrees', 'task-auth');
+        const wtPath = path.join(repoDir, '.osmium', 'worktrees', 'task-auth');
         fs.mkdirSync(path.dirname(wtPath), { recursive: true });
         const wtRes = runGit(repoDir, [
           'worktree',
           'add',
           '-B',
-          'conductor/task/task-auth',
+          'osmium/task/task-auth',
           wtPath,
-          'conductor/integration',
+          'osmium/integration',
         ]);
         assert.equal(wtRes.status, 0, `git worktree add failed: ${wtRes.stderr}`);
 
@@ -143,7 +143,7 @@ export const tests = [
         runGit(wtPath, ['add', '-A']);
         runGit(wtPath, ['commit', '-m', 'Task auth work']);
 
-        const diffFiles = runGit(wtPath, ['diff', '--name-only', 'conductor/integration'])
+        const diffFiles = runGit(wtPath, ['diff', '--name-only', 'osmium/integration'])
           .stdout.split('\n')
           .filter(Boolean);
         const scopeCheck = detectOutOfScopeEdits(diffFiles, ['src/auth/**']);
@@ -185,16 +185,16 @@ export const tests = [
     tier: 2,
     feature: 13,
     features: [13, 19],
-    title: 'Stops merge into conductor/integration on git conflict without corrupting branch and offers CLI assignment',
+    title: 'Stops merge into osmium/integration on git conflict without corrupting branch and offers CLI assignment',
     async fn(ctx = {}) {
       resolveWorkspaceFeature(ctx, 13);
       await withTempGitRepo(async (repoDir) => {
-        const wt1 = path.join(repoDir, '.conductor/worktrees/task-1');
-        const wt2 = path.join(repoDir, '.conductor/worktrees/task-2');
+        const wt1 = path.join(repoDir, '.osmium/worktrees/task-1');
+        const wt2 = path.join(repoDir, '.osmium/worktrees/task-2');
         fs.mkdirSync(path.dirname(wt1), { recursive: true });
 
-        runGit(repoDir, ['worktree', 'add', '-B', 'conductor/task/task-1', wt1, 'conductor/integration']);
-        runGit(repoDir, ['worktree', 'add', '-B', 'conductor/task/task-2', wt2, 'conductor/integration']);
+        runGit(repoDir, ['worktree', 'add', '-B', 'osmium/task/task-1', wt1, 'osmium/integration']);
+        runGit(repoDir, ['worktree', 'add', '-B', 'osmium/task/task-2', wt2, 'osmium/integration']);
 
         fs.writeFileSync(path.join(wt1, 'src/index.ts'), 'export const main = () => "from-task-1";\n', 'utf8');
         runGit(wt1, ['commit', '-am', 'Task 1 edit']);
@@ -202,13 +202,13 @@ export const tests = [
         fs.writeFileSync(path.join(wt2, 'src/index.ts'), 'export const main = () => "from-task-2";\n', 'utf8');
         runGit(wt2, ['commit', '-am', 'Task 2 edit']);
 
-        // Merge task-1 into conductor/integration cleanly
-        runGit(repoDir, ['checkout', 'conductor/integration']);
-        const m1 = runGit(repoDir, ['merge', '--no-ff', 'conductor/task/task-1', '-m', 'Merge task 1']);
+        // Merge task-1 into osmium/integration cleanly
+        runGit(repoDir, ['checkout', 'osmium/integration']);
+        const m1 = runGit(repoDir, ['merge', '--no-ff', 'osmium/task/task-1', '-m', 'Merge task 1']);
         assert.equal(m1.status, 0);
 
         // Merging task-2 produces a conflict
-        const m2 = runGit(repoDir, ['merge', '--no-ff', 'conductor/task/task-2', '-m', 'Merge task 2']);
+        const m2 = runGit(repoDir, ['merge', '--no-ff', 'osmium/task/task-2', '-m', 'Merge task 2']);
         assert.notEqual(m2.status, 0);
 
         const conflictFiles = runGit(repoDir, ['diff', '--name-only', '--diff-filter=U'])
@@ -216,7 +216,7 @@ export const tests = [
           .filter(Boolean);
         assert.deepEqual(conflictFiles, ['src/index.ts']);
 
-        // Abort merge to keep conductor/integration clean and offer CLI conflict assignment
+        // Abort merge to keep osmium/integration clean and offer CLI conflict assignment
         runGit(repoDir, ['merge', '--abort']);
         const statusAfterAbort = runGit(repoDir, ['status', '--porcelain', '--untracked-files=no']).stdout;
         assert.equal(statusAfterAbort, '');
@@ -965,7 +965,7 @@ export const tests = [
         '  return "Brief";',
         '=======',
         '  return "Copy review brief (Feature)";',
-        '>>>>>>> conductor/task/brief',
+        '>>>>>>> osmium/task/brief',
         '}',
         '',
       ].join('\n');
@@ -1142,7 +1142,7 @@ export const tests = [
             id: serverId,
             installed: false,
             autoInstalled: false,
-            installHint: `Install ${serverId} manually (e.g. 'cargo install ${serverId}' or system package manager). Conductor never installs language servers silently.`,
+            installHint: `Install ${serverId} manually (e.g. 'cargo install ${serverId}' or system package manager). Osmium never installs language servers silently.`,
           };
         }
         spawnedCommands.push(binaryPath);
@@ -1552,14 +1552,14 @@ export const tests = [
   },
 
   /* ==========================================================================
-   * FEATURE 23: Adapter SDK & ~/.conductor/extensions/ API (5 Tests)
+   * FEATURE 23: Adapter SDK & ~/.osmium/extensions/ API (5 Tests)
    * ========================================================================== */
   {
     id: 'T2-F23-01',
     tier: 2,
     feature: 23,
     features: [23],
-    title: 'Extension requesting node-process permission in conductor.json is blocked until user approves permission prompt',
+    title: 'Extension requesting node-process permission in osmium.json is blocked until user approves permission prompt',
     async fn(ctx = {}) {
       resolveWorkspaceFeature(ctx, 23);
       const manifest = {
@@ -1593,13 +1593,13 @@ export const tests = [
     tier: 2,
     feature: 23,
     features: [23],
-    title: 'Invalid conductor.json manifest missing required fields or containing unknown permissions is rejected',
+    title: 'Invalid osmium.json manifest missing required fields or containing unknown permissions is rejected',
     async fn(ctx = {}) {
       resolveWorkspaceFeature(ctx, 23);
       const allowedPermissions = new Set(['node-process', 'filesystem', 'network', 'webview']);
       function validateExtensionManifest(m) {
         if (!m || typeof m.name !== 'string' || !m.name || typeof m.version !== 'string' || typeof m.displayName !== 'string') {
-          const err = new Error('Invalid conductor.json: name, version, and displayName are required');
+          const err = new Error('Invalid osmium.json: name, version, and displayName are required');
           err.code = 'ERR_INVALID_EXTENSION_MANIFEST';
           throw err;
         }
@@ -1840,15 +1840,15 @@ export const tests = [
         return fn(...args);
       }
 
-      registerCommand('conductor.toggleAgentPanel', () => 'toggled');
-      assert.equal(executeCommand('conductor.toggleAgentPanel'), 'toggled');
+      registerCommand('osmium.toggleAgentPanel', () => 'toggled');
+      assert.equal(executeCommand('osmium.toggleAgentPanel'), 'toggled');
 
       assert.throws(
-        () => registerCommand('conductor.toggleAgentPanel', () => {}),
+        () => registerCommand('osmium.toggleAgentPanel', () => {}),
         (err) => err.code === 'ERR_DUPLICATE_COMMAND'
       );
       assert.throws(
-        () => executeCommand('conductor.nonExistentCommand'),
+        () => executeCommand('osmium.nonExistentCommand'),
         (err) => err.code === 'ERR_COMMAND_NOT_FOUND'
       );
     },

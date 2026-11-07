@@ -9,7 +9,7 @@ import { CliBadge, Composer, EditedFilesCard, ApprovalPrompt } from '../index.js
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-describe('@conductor/ui tokens & components', () => {
+describe('@osmium/ui tokens & components', () => {
   it('declares local bundled Inter @font-face and Section 7 CSS variables in tokens.css', () => {
     const tokensCss = fs.readFileSync(path.resolve(__dirname, '../tokens.css'), 'utf8');
     expect(tokensCss).toContain("font-family: 'Inter'");
@@ -39,7 +39,7 @@ describe('@conductor/ui tokens & components', () => {
     render(<CliBadge cliId="codex" roleLabel="Primary" />);
     const badge = screen.getByTestId('cli-badge-codex');
     expect(badge.textContent).toContain('Codex CLI · Primary');
-    const dot = badge.querySelector('.conductor-cli-dot') as HTMLElement | null;
+    const dot = badge.querySelector('.osmium-cli-dot') as HTMLElement | null;
     expect(dot).not.toBeNull();
   });
 

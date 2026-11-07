@@ -1,5 +1,5 @@
 {
-  "name": "@conductor/ui",
+  "name": "@osmium/ui",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -18,8 +18,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@conductor/core": "workspace:*",
-    "@conductor/adapters": "workspace:*",
+    "@osmium/core": "workspace:*",
+    "@osmium/adapters": "workspace:*",
     "@fontsource/inter": "^5.3.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"

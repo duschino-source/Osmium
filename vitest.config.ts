@@ -7,11 +7,11 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
   resolve: {
     alias: {
-      '@conductor/core': path.resolve(__dirname, 'packages/core/src/index.ts'),
-      '@conductor/ide-core': path.resolve(__dirname, 'packages/ide-core/src/index.ts'),
-      '@conductor/adapters': path.resolve(__dirname, 'packages/adapters/src/index.ts'),
-      '@conductor/ui': path.resolve(__dirname, 'packages/ui/src/index.ts'),
-      '@conductor/mock-cli': path.resolve(__dirname, 'packages/mock-cli/src/index.ts'),
+      '@osmium/core': path.resolve(__dirname, 'packages/core/src/index.ts'),
+      '@osmium/ide-core': path.resolve(__dirname, 'packages/ide-core/src/index.ts'),
+      '@osmium/adapters': path.resolve(__dirname, 'packages/adapters/src/index.ts'),
+      '@osmium/ui': path.resolve(__dirname, 'packages/ui/src/index.ts'),
+      '@osmium/mock-cli': path.resolve(__dirname, 'packages/mock-cli/src/index.ts'),
     },
   },
   test: {

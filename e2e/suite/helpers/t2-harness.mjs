@@ -40,7 +40,7 @@ export const FEATURE_WORKSPACE_MAP = {
  */
 export function resolveWorkspaceFeature(ctx = {}, featureNumber) {
   const rootDir = ctx.rootDir || ROOT_DIR;
-  const strict = Boolean(ctx.strictWorkspace || process.env.CONDUCTOR_E2E_STRICT === '1');
+  const strict = Boolean(ctx.strictWorkspace || process.env.OSMIUM_E2E_STRICT === '1');
   const expectedRelPaths = FEATURE_WORKSPACE_MAP[featureNumber] || [];
   const existing = [];
   const missing = [];
@@ -87,9 +87,9 @@ export async function tryImportWorkspaceModule(rootDir, candidateRelPaths) {
 }
 
 /**
- * Executes a callback with a fresh temporary directory in /tmp/conductor-e2e-t2-* and cleans up in finally.
+ * Executes a callback with a fresh temporary directory in /tmp/osmium-e2e-t2-* and cleans up in finally.
  */
-export async function withTempDir(fn, prefix = 'conductor-e2e-t2-') {
+export async function withTempDir(fn, prefix = 'osmium-e2e-t2-') {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
   try {
     return await fn(tmpDir);
@@ -110,10 +110,10 @@ export function runGit(cwd, args, extraEnv = {}) {
     cwd,
     env: {
       ...process.env,
-      GIT_AUTHOR_NAME: 'Conductor Test',
-      GIT_AUTHOR_EMAIL: 'test@conductor.local',
-      GIT_COMMITTER_NAME: 'Conductor Test',
-      GIT_COMMITTER_EMAIL: 'test@conductor.local',
+      GIT_AUTHOR_NAME: 'Osmium Test',
+      GIT_AUTHOR_EMAIL: 'test@osmium.local',
+      GIT_COMMITTER_NAME: 'Osmium Test',
+      GIT_COMMITTER_EMAIL: 'test@osmium.local',
       ...extraEnv,
     },
     encoding: 'utf8',
@@ -127,14 +127,14 @@ export function runGit(cwd, args, extraEnv = {}) {
 }
 
 /**
- * Creates a real temporary Git repository in /tmp/conductor-e2e-t2-git-* with an initial commit.
+ * Creates a real temporary Git repository in /tmp/osmium-e2e-t2-git-* with an initial commit.
  */
 export async function withTempGitRepo(fn, opts = {}) {
   return withTempDir(async (repoDir) => {
     const initRes = runGit(repoDir, ['init', '-b', opts.defaultBranch || 'main']);
     assert.equal(initRes.status, 0, `git init failed: ${initRes.stderr}`);
-    runGit(repoDir, ['config', 'user.name', 'Conductor Test']);
-    runGit(repoDir, ['config', 'user.email', 'test@conductor.local']);
+    runGit(repoDir, ['config', 'user.name', 'Osmium Test']);
+    runGit(repoDir, ['config', 'user.email', 'test@osmium.local']);
 
     const initialFiles = opts.initialFiles || {
       'README.md': '# Sample Project\n',
@@ -155,7 +155,7 @@ export async function withTempGitRepo(fn, opts = {}) {
     assert.equal(commitRes.status, 0, `Initial commit failed: ${commitRes.stderr}`);
 
     if (opts.createIntegrationBranch !== false) {
-      runGit(repoDir, ['branch', 'conductor/integration']);
+      runGit(repoDir, ['branch', 'osmium/integration']);
     }
 
     try {
@@ -164,7 +164,7 @@ export async function withTempGitRepo(fn, opts = {}) {
       // Prune any worktrees created inside repoDir before rmSync
       runGit(repoDir, ['worktree', 'prune']);
     }
-  }, 'conductor-e2e-t2-git-');
+  }, 'osmium-e2e-t2-git-');
 }
 
 /* ============================================================================
@@ -245,7 +245,7 @@ export function recoverCorruptedProgress(projectDir) {
       fs.copyFileSync(progressPath, `${progressPath}.bak`);
     }
     const recovered = [
-      '# Conductor Progress',
+      '# Osmium Progress',
       '',
       '## What is done',
       '- Reconstructed from repository state after corrupted PROGRESS.md.',
@@ -334,7 +334,7 @@ export function validateZeroApiKeyRequirement(configObject) {
 
   walk(configObject);
   if (found.length > 0) {
-    const err = new Error(`API keys or tokens are strictly prohibited in Conductor config: ${found.join(', ')}`);
+    const err = new Error(`API keys or tokens are strictly prohibited in Osmium config: ${found.join(', ')}`);
     err.code = 'ERR_API_KEY_PROHIBITED';
     err.keys = found;
     throw err;
@@ -359,9 +359,9 @@ export class WorkspaceBoundaryGuard {
   constructor(projectRoot, opts = {}) {
     this.projectRoot = fs.realpathSync(projectRoot);
     this.activeWorktree = opts.activeWorktree ? fs.realpathSync(opts.activeWorktree) : null;
-    this.globalConductorDir = opts.globalConductorDir
-      ? path.resolve(opts.globalConductorDir)
-      : path.join(os.homedir(), '.conductor');
+    this.globalOsmiumDir = opts.globalOsmiumDir
+      ? path.resolve(opts.globalOsmiumDir)
+      : path.join(os.homedir(), '.osmium');
   }
 
   validateWritePath(inputPath) {
@@ -426,7 +426,7 @@ export class WorkspaceBoundaryGuard {
     }
 
     const relToRoot = path.relative(this.projectRoot, finalRealPath);
-    const relToGlobal = path.relative(this.globalConductorDir, finalRealPath);
+    const relToGlobal = path.relative(this.globalOsmiumDir, finalRealPath);
     const insideRoot = !relToRoot.startsWith('..') && !path.isAbsolute(relToRoot);
     const insideGlobal = !relToGlobal.startsWith('..') && !path.isAbsolute(relToGlobal);
 
@@ -548,7 +548,7 @@ export async function probeCliExecutable(execPath, opts = {}) {
 
   const degradedNotes = [];
   if (!capabilities.resume) {
-    degradedNotes.push('No native --resume support; Conductor will re-send handoff summary via systemContext.');
+    degradedNotes.push('No native --resume support; Osmium will re-send handoff summary via systemContext.');
   }
 
   return {
@@ -943,7 +943,7 @@ export class SqliteSessionStore {
 
 export function createGitCheckpoint(repoDir, checkpointId) {
   const gitDir = path.join(repoDir, '.git');
-  const tmpIndex = path.join(gitDir, `conductor-tmp-index-${checkpointId}-${crypto.randomBytes(4).toString('hex')}`);
+  const tmpIndex = path.join(gitDir, `osmium-tmp-index-${checkpointId}-${crypto.randomBytes(4).toString('hex')}`);
   const realIndex = path.join(gitDir, 'index');
 
   if (fs.existsSync(realIndex)) {
@@ -958,13 +958,13 @@ export function createGitCheckpoint(repoDir, checkpointId) {
     assert.equal(treeRes.status, 0, `checkpoint git write-tree failed: ${treeRes.stderr}`);
     const treeSha = treeRes.stdout;
 
-    const commitRes = runGit(repoDir, ['commit-tree', treeSha, '-m', `Conductor checkpoint ${checkpointId}`], {
+    const commitRes = runGit(repoDir, ['commit-tree', treeSha, '-m', `Osmium checkpoint ${checkpointId}`], {
       GIT_INDEX_FILE: tmpIndex,
     });
     assert.equal(commitRes.status, 0, `checkpoint git commit-tree failed: ${commitRes.stderr}`);
     const commitSha = commitRes.stdout;
 
-    const refName = `refs/conductor/checkpoints/${checkpointId}`;
+    const refName = `refs/osmium/checkpoints/${checkpointId}`;
     const refRes = runGit(repoDir, ['update-ref', refName, commitSha]);
     assert.equal(refRes.status, 0, `checkpoint update-ref failed: ${refRes.stderr}`);
 
@@ -982,7 +982,7 @@ export function undoGitCheckpoint(repoDir, checkpointId) {
     err.code = 'ERR_CHECKPOINT_NOT_FOUND';
     throw err;
   }
-  const refName = `refs/conductor/checkpoints/${checkpointId}`;
+  const refName = `refs/osmium/checkpoints/${checkpointId}`;
   const verifyRes = runGit(repoDir, ['rev-parse', '--verify', `${refName}^{tree}`]);
   if (verifyRes.status !== 0) {
     const err = new Error(`Checkpoint ref does not exist: ${refName}`);
@@ -1002,7 +1002,7 @@ export function undoGitCheckpoint(repoDir, checkpointId) {
 }
 
 /* ============================================================================
- * FEATURE 9: .conductor/project.yaml Config Parser & Validator
+ * FEATURE 9: .osmium/project.yaml Config Parser & Validator
  * ============================================================================ */
 
 export function validateProjectConfig(rawObj) {
@@ -1066,10 +1066,10 @@ export function validateProjectConfig(rawObj) {
   }
 
   if (clone.teamwork === undefined) {
-    clone.teamwork = { maxParallel: 2, integrationBranch: 'conductor/integration' };
+    clone.teamwork = { maxParallel: 2, integrationBranch: 'osmium/integration' };
   }
   if (clone.teamwork.maxParallel === undefined) clone.teamwork.maxParallel = 2;
-  if (clone.teamwork.integrationBranch === undefined) clone.teamwork.integrationBranch = 'conductor/integration';
+  if (clone.teamwork.integrationBranch === undefined) clone.teamwork.integrationBranch = 'osmium/integration';
 
   if (
     typeof clone.teamwork.maxParallel !== 'number' ||
@@ -1086,10 +1086,10 @@ export function validateProjectConfig(rawObj) {
 }
 
 export function loadOrInitProjectYaml(projectRoot) {
-  const conductorDir = path.join(projectRoot, '.conductor');
-  const yamlPath = path.join(conductorDir, 'project.yaml');
+  const osmiumDir = path.join(projectRoot, '.osmium');
+  const yamlPath = path.join(osmiumDir, 'project.yaml');
   if (!fs.existsSync(yamlPath)) {
-    fs.mkdirSync(conductorDir, { recursive: true });
+    fs.mkdirSync(osmiumDir, { recursive: true });
     const defaultCfg = validateProjectConfig({
       version: 1,
       name: path.basename(projectRoot),
@@ -1098,7 +1098,7 @@ export function loadOrInitProjectYaml(projectRoot) {
       approvalMode: 'ask',
       routing: [],
       fallback: { onQuotaHit: 'next-secondary' },
-      teamwork: { maxParallel: 2, integrationBranch: 'conductor/integration' },
+      teamwork: { maxParallel: 2, integrationBranch: 'osmium/integration' },
     });
     fs.writeFileSync(yamlPath, JSON.stringify(defaultCfg, null, 2), 'utf8');
     return { initializedDefault: true, config: defaultCfg, yamlPath };

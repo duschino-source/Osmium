@@ -7,7 +7,7 @@ import type {
   CliDetectionResult,
   CliId,
   StartOptions,
-} from '@conductor/core';
+} from '@osmium/core';
 
 export type {
   AgentEvent,

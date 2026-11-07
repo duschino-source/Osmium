@@ -16,7 +16,7 @@ export function checkWorkspaceArtifact(ctx, relPath) {
   return { exists, fullPath };
 }
 
-export async function withTempDir(fn, prefix = 'conductor-e2e-t1-') {
+export async function withTempDir(fn, prefix = 'osmium-e2e-t1-') {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
   try {
     return await fn(tmpDir);
@@ -30,10 +30,10 @@ export function gitExec(cwd, args, extraEnv = {}) {
     cwd,
     env: {
       ...process.env,
-      GIT_AUTHOR_NAME: 'Conductor Test',
-      GIT_AUTHOR_EMAIL: 'conductor@example.local',
-      GIT_COMMITTER_NAME: 'Conductor Test',
-      GIT_COMMITTER_EMAIL: 'conductor@example.local',
+      GIT_AUTHOR_NAME: 'Osmium Test',
+      GIT_AUTHOR_EMAIL: 'osmium@example.local',
+      GIT_COMMITTER_NAME: 'Osmium Test',
+      GIT_COMMITTER_EMAIL: 'osmium@example.local',
       ...extraEnv,
     },
     encoding: 'utf8',
@@ -44,8 +44,8 @@ export function gitExec(cwd, args, extraEnv = {}) {
 export async function withTempGitRepo(fn, initialFiles = null) {
   return withTempDir(async (repoDir) => {
     gitExec(repoDir, ['init', '-b', 'main']);
-    gitExec(repoDir, ['config', 'user.name', 'Conductor Test']);
-    gitExec(repoDir, ['config', 'user.email', 'conductor@example.local']);
+    gitExec(repoDir, ['config', 'user.name', 'Osmium Test']);
+    gitExec(repoDir, ['config', 'user.email', 'osmium@example.local']);
 
     const files = initialFiles || {
       'README.md': '# api-gateway\n',
@@ -62,7 +62,7 @@ export async function withTempGitRepo(fn, initialFiles = null) {
         null,
         2
       ),
-      '.gitignore': 'node_modules/\ndist/\n.conductor/worktrees/\n*.log\n',
+      '.gitignore': 'node_modules/\ndist/\n.osmium/worktrees/\n*.log\n',
       'src/index.ts': 'export const appName = "api-gateway";\n',
       'src/routes/auth.ts': 'export function verifyAuth(token: string): boolean {\n  return Boolean(token);\n}\n',
       'src/routes/compare.ts': [
@@ -90,7 +90,7 @@ export async function withTempGitRepo(fn, initialFiles = null) {
 
     gitExec(repoDir, ['add', '-A']);
     gitExec(repoDir, ['commit', '-m', 'Initial commit']);
-    gitExec(repoDir, ['branch', 'conductor/integration']);
+    gitExec(repoDir, ['branch', 'osmium/integration']);
     return await fn(repoDir);
   });
 }
@@ -119,14 +119,14 @@ export function ensurePlanAndProgressDocs(targetRoot, requestPath = '/home/antig
     fs.copyFileSync(workspaceProgress, progressPath);
   } else {
     const progressTemplate = [
-      '# Conductor Build Progress',
+      '# Osmium Build Progress',
       '',
       '## What is done',
       '- Phase 0: Monorepo scaffold, CSS design tokens, and `packages/mock-cli` initialized.',
       '- Phase 1: Session manager and SQLite persistence operational.',
       '',
       '## What is next',
-      '- Phase 2: Pre-turn git checkpoints under `refs/conductor/checkpoints/` and Monaco diff review.',
+      '- Phase 2: Pre-turn git checkpoints under `refs/osmium/checkpoints/` and Monaco diff review.',
       '',
       '## Decisions made',
       '- Custom workbench on Monaco rather than forking Code - OSS (Section 13.1).',
@@ -230,7 +230,7 @@ import readline from 'node:readline';
 
 const args = process.argv.slice(2);
 if (args.includes('--version') || args.includes('-v')) {
-  console.log('conductor-mock-cli 1.4.0');
+  console.log('osmium-mock-cli 1.4.0');
   process.exit(0);
 }
 if (args.includes('--help') || args.includes('-h')) {
@@ -386,10 +386,10 @@ export function spawnCliProcess(scriptPath, args = [], options = {}) {
 // ---------------------------------------------------------------------------
 
 export class WorkspaceWriteBoundaryGuard {
-  constructor({ projectRoot, homeConductorDir }) {
+  constructor({ projectRoot, homeOsmiumDir }) {
     this.projectRoot = fs.realpathSync(projectRoot);
-    this.worktreesRoot = path.join(this.projectRoot, '.conductor', 'worktrees');
-    this.homeConductorDir = homeConductorDir ? path.resolve(homeConductorDir) : path.join(os.homedir(), '.conductor');
+    this.worktreesRoot = path.join(this.projectRoot, '.osmium', 'worktrees');
+    this.homeOsmiumDir = homeOsmiumDir ? path.resolve(homeOsmiumDir) : path.join(os.homedir(), '.osmium');
   }
 
   resolveAllowedPath(targetPath) {
@@ -405,7 +405,7 @@ export class WorkspaceWriteBoundaryGuard {
     if (
       isInside(this.projectRoot, absTarget) ||
       isInside(this.worktreesRoot, absTarget) ||
-      isInside(this.homeConductorDir, absTarget)
+      isInside(this.homeOsmiumDir, absTarget)
     ) {
       return absTarget;
     }
@@ -514,7 +514,7 @@ export class CliProberAndRegistry {
 // F07, F10, F14: Real SQLite Storage & Session Manager
 // ---------------------------------------------------------------------------
 
-export class ConductorSqliteStore {
+export class OsmiumSqliteStore {
   constructor(dbPath) {
     this.dbPath = dbPath;
     fs.mkdirSync(path.dirname(dbPath), { recursive: true });
@@ -729,7 +729,7 @@ export function createGitCheckpoint(repoDir, checkpointId) {
   const gitDir = gitExec(repoDir, ['rev-parse', '--git-dir']);
   const absGitDir = path.resolve(repoDir, gitDir);
   const realIndexPath = path.join(absGitDir, 'index');
-  const tmpIndexPath = path.join(absGitDir, `conductor-tmp-index-${checkpointId}-${ process.pid }`);
+  const tmpIndexPath = path.join(absGitDir, `osmium-tmp-index-${checkpointId}-${ process.pid }`);
 
   if (fs.existsSync(realIndexPath)) {
     fs.copyFileSync(realIndexPath, tmpIndexPath);
@@ -741,10 +741,10 @@ export function createGitCheckpoint(repoDir, checkpointId) {
     const treeSha = gitExec(repoDir, ['write-tree'], env);
     const commitSha = gitExec(
       repoDir,
-      ['commit-tree', treeSha, '-m', `Conductor pre-turn checkpoint ${checkpointId}`],
+      ['commit-tree', treeSha, '-m', `Osmium pre-turn checkpoint ${checkpointId}`],
       env
     );
-    const refName = `refs/conductor/checkpoints/${checkpointId}`;
+    const refName = `refs/osmium/checkpoints/${checkpointId}`;
     gitExec(repoDir, ['update-ref', refName, commitSha]);
     return { checkpointId, refName, treeSha, commitSha };
   } finally {
@@ -753,10 +753,10 @@ export function createGitCheckpoint(repoDir, checkpointId) {
 }
 
 export function getCheckpointDiff(repoDir, checkpointId) {
-  const refName = `refs/conductor/checkpoints/${checkpointId}`;
+  const refName = `refs/osmium/checkpoints/${checkpointId}`;
   const gitDir = gitExec(repoDir, ['rev-parse', '--git-dir']);
   const absGitDir = path.resolve(repoDir, gitDir);
-  const tmpIndexPath = path.join(absGitDir, `conductor-diff-index-${checkpointId}-${process.pid}`);
+  const tmpIndexPath = path.join(absGitDir, `osmium-diff-index-${checkpointId}-${process.pid}`);
 
   try {
     const env = { GIT_INDEX_FILE: tmpIndexPath };
@@ -783,7 +783,7 @@ export function getCheckpointDiff(repoDir, checkpointId) {
 }
 
 export function undoGitCheckpoint(repoDir, checkpointId) {
-  const refName = `refs/conductor/checkpoints/${checkpointId}`;
+  const refName = `refs/osmium/checkpoints/${checkpointId}`;
   const treeSha = gitExec(repoDir, ['rev-parse', `${refName}^{tree}`]);
   gitExec(repoDir, ['read-tree', '--reset', '-u', treeSha]);
   gitExec(repoDir, ['clean', '-fd']);
@@ -792,7 +792,7 @@ export function undoGitCheckpoint(repoDir, checkpointId) {
 }
 
 // ---------------------------------------------------------------------------
-// F09: .conductor/project.yaml Parser & Serializer (Preserving Unknown Keys)
+// F09: .osmium/project.yaml Parser & Serializer (Preserving Unknown Keys)
 // ---------------------------------------------------------------------------
 
 export function parseSimpleProjectYaml(yamlText) {
@@ -918,7 +918,7 @@ export function validateAndNormalizeProjectConfig(raw) {
     },
     teamwork: {
       maxParallel: 2,
-      integrationBranch: 'conductor/integration',
+      integrationBranch: 'osmium/integration',
       ...(raw.teamwork || {}),
     },
   };
@@ -935,13 +935,13 @@ export function validateAndNormalizeProjectConfig(raw) {
 }
 
 export function loadProjectConfigFile(projectRoot) {
-  const cfgPath = path.join(projectRoot, '.conductor', 'project.yaml');
+  const cfgPath = path.join(projectRoot, '.osmium', 'project.yaml');
   const rawObj = parseSimpleProjectYaml(fs.readFileSync(cfgPath, 'utf8'));
   return validateAndNormalizeProjectConfig(rawObj);
 }
 
 export function saveProjectConfigFile(projectRoot, updates) {
-  const cfgPath = path.join(projectRoot, '.conductor', 'project.yaml');
+  const cfgPath = path.join(projectRoot, '.osmium', 'project.yaml');
   let existing = {};
   if (fs.existsSync(cfgPath)) {
     existing = parseSimpleProjectYaml(fs.readFileSync(cfgPath, 'utf8'));
@@ -977,7 +977,7 @@ export function buildHandoffSystemContext(store, sessionId, fromCli, toCli) {
   }
 
   return [
-    `[Conductor Mid-Session Handoff: ${fromCli} -> ${toCli}]`,
+    `[Osmium Mid-Session Handoff: ${fromCli} -> ${toCli}]`,
     `User prompts: ${userPrompts.join(' | ') || 'none'}`,
     `Previous assistant summary: ${assistantReplies.join(' | ') || 'none'}`,
     `Edited files: ${editedFiles.join(', ') || 'none'}`,
@@ -1076,10 +1076,10 @@ export function routeTeamworkTasks(plan, projectConfig) {
   });
 }
 
-export function createTaskWorktree(repoDir, taskId, integrationBranch = 'conductor/integration') {
-  const worktreeRel = path.join('.conductor', 'worktrees', taskId);
+export function createTaskWorktree(repoDir, taskId, integrationBranch = 'osmium/integration') {
+  const worktreeRel = path.join('.osmium', 'worktrees', taskId);
   const worktreeAbs = path.join(repoDir, worktreeRel);
-  const branchName = `conductor/task/${taskId}`;
+  const branchName = `osmium/task/${taskId}`;
   fs.mkdirSync(path.dirname(worktreeAbs), { recursive: true });
   gitExec(repoDir, ['worktree', 'add', '-B', branchName, worktreeAbs, integrationBranch]);
   return { taskId, worktreePath: worktreeAbs, branchName };
@@ -1130,8 +1130,8 @@ export async function runTeamworkScheduler(tasks, maxParallel, workerFn) {
   return { maxObservedActive, timeline, tasks: remaining };
 }
 
-export function mergeTaskBranchIntoIntegration(repoDir, taskId, integrationBranch = 'conductor/integration') {
-  const branchName = `conductor/task/${taskId}`;
+export function mergeTaskBranchIntoIntegration(repoDir, taskId, integrationBranch = 'osmium/integration') {
+  const branchName = `osmium/task/${taskId}`;
   gitExec(repoDir, ['checkout', integrationBranch]);
   gitExec(repoDir, ['merge', '--no-ff', branchName, '-m', `Merge teamwork task ${taskId}`]);
   const headSha = gitExec(repoDir, ['rev-parse', 'HEAD']);

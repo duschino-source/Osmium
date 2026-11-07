@@ -66,8 +66,8 @@ function registerPhase0IpcHandlers(): void {
     defaultApprovalMode: 'ask',
     telemetryOptIn: false,
     keybindings: {
-      'conductor.commandPalette': 'CommandOrControl+K',
-      'conductor.toggleAgentPanel': 'CommandOrControl+L',
+      'osmium.commandPalette': 'CommandOrControl+K',
+      'osmium.toggleAgentPanel': 'CommandOrControl+L',
     },
   }));
 }
@@ -78,7 +78,7 @@ function createMainWindow(): BrowserWindow {
     height: 720,
     minWidth: 960,
     minHeight: 600,
-    title: 'Conductor',
+    title: 'OsmiumIDE',
     backgroundColor: '#F6F8F5',
     show: true,
     webPreferences: {

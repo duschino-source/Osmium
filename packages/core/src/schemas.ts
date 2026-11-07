@@ -21,7 +21,7 @@ export const FallbackConfigSchema = z
 export const TeamworkConfigSchema = z
   .object({
     maxParallel: z.number().int().positive().default(2),
-    integrationBranch: z.string().min(1).default('conductor/integration'),
+    integrationBranch: z.string().min(1).default('osmium/integration'),
   })
   .passthrough();
 
@@ -36,7 +36,7 @@ export const ProjectConfigSchema = z
     fallback: FallbackConfigSchema.default({ onQuotaHit: 'next-secondary' }),
     teamwork: TeamworkConfigSchema.default({
       maxParallel: 2,
-      integrationBranch: 'conductor/integration',
+      integrationBranch: 'osmium/integration',
     }),
   })
   .passthrough();
@@ -63,7 +63,7 @@ function deepMergePreservingUnknown(
 }
 
 /**
- * Parses and validates `.conductor/project.yaml` content using ProjectConfigSchema
+ * Parses and validates `.osmium/project.yaml` content using ProjectConfigSchema
  * while preserving all unknown keys at both root and nested object levels.
  */
 export function parseProjectConfigYaml(yamlText: string): ProjectConfig {
@@ -184,13 +184,13 @@ export type ExtensionManifest = z.infer<typeof ExtensionManifestSchema>;
 
 /**
  * Checks whether `targetPath` is safely inside `projectRoot` (which includes
- * `.conductor/worktrees/`) or `~/.conductor/` (for global user extensions/settings).
+ * `.osmium/worktrees/`) or `~/.osmium/` (for global user extensions/settings).
  * Enforces Section 2.5: "The app never writes outside the project root or its own worktrees."
  */
 export function isPathInsideWorkspace(
   projectRoot: string,
   targetPath: string,
-  allowGlobalConductorDir = false,
+  allowGlobalOsmiumDir = false,
 ): boolean {
   const resolvedRoot = path.resolve(projectRoot);
   const resolvedTarget = path.resolve(projectRoot, targetPath);
@@ -202,9 +202,9 @@ export function isPathInsideWorkspace(
     return true;
   }
 
-  if (allowGlobalConductorDir) {
-    const globalConductor = path.resolve(os.homedir(), '.conductor');
-    const globalRel = path.relative(globalConductor, resolvedTarget);
+  if (allowGlobalOsmiumDir) {
+    const globalOsmium = path.resolve(os.homedir(), '.osmium');
+    const globalRel = path.relative(globalOsmium, resolvedTarget);
     if (globalRel === '' || (!globalRel.startsWith('..') && !path.isAbsolute(globalRel))) {
       return true;
     }
@@ -216,9 +216,9 @@ export function isPathInsideWorkspace(
 export function assertWorkspaceWriteAllowed(
   projectRoot: string,
   targetPath: string,
-  allowGlobalConductorDir = false,
+  allowGlobalOsmiumDir = false,
 ): string {
-  if (!isPathInsideWorkspace(projectRoot, targetPath, allowGlobalConductorDir)) {
+  if (!isPathInsideWorkspace(projectRoot, targetPath, allowGlobalOsmiumDir)) {
     throw new Error(
       `Workspace boundary violation: refusing to write to "${targetPath}" outside project root "${projectRoot}"`,
     );

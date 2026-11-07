@@ -7,7 +7,7 @@ import {
   createVersionWarning,
 } from '../index.js';
 
-describe('@conductor/adapters utilities', () => {
+describe('@osmium/adapters utilities', () => {
   it('returns exact Section 7 colors for Codex, Antigravity, and DeepSeek', () => {
     expect(getCliColor('codex')).toBe('#1B2B22');
     expect(getCliColor('antigravity')).toBe('#2F5FD0');

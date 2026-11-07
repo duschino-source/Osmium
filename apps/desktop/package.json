@@ -1,5 +1,7 @@
 {
-  "name": "@conductor/desktop",
+  "name": "@osmium/desktop",
+  "productName": "OsmiumIDE",
+  "description": "OsmiumIDE — Desktop IDE and Multi-CLI Orchestrator",
   "version": "0.1.0",
   "private": true,
   "main": "dist/main/index.js",
@@ -9,10 +11,10 @@
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.main.json --noEmit"
   },
   "dependencies": {
-    "@conductor/adapters": "workspace:*",
-    "@conductor/core": "workspace:*",
-    "@conductor/ide-core": "workspace:*",
-    "@conductor/ui": "workspace:*",
+    "@osmium/adapters": "workspace:*",
+    "@osmium/core": "workspace:*",
+    "@osmium/ide-core": "workspace:*",
+    "@osmium/ui": "workspace:*",
     "@xterm/xterm": "^6.0.0",
     "monaco-editor": "^0.57.0",
     "react": "^19.1.0",

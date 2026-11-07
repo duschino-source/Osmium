@@ -4,7 +4,7 @@ import { describe, it, expect } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { App } from '../renderer/App.js';
 
-describe('@conductor/desktop Phase 0 App Shell', () => {
+describe('@osmium/desktop Phase 0 App Shell', () => {
   it('renders sidebar navigation, projects with CLI dots, recent sessions, and footer links', () => {
     render(<App />);
     const sidebar = screen.getByTestId('app-sidebar');

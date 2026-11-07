@@ -23,7 +23,7 @@ function parseArgs(argv) {
     filter: null, // string or null
     list: false,
     json: false,
-    strictWorkspace: process.env.CONDUCTOR_E2E_STRICT === '1',
+    strictWorkspace: process.env.OSMIUM_E2E_STRICT === '1',
   };
 
   for (const arg of argv) {
@@ -201,7 +201,7 @@ async function main() {
       process.exit(selectedTests.length > 0 ? 0 : 1);
     }
 
-    console.log('=== Conductor E2E Test Inventory ===');
+    console.log('=== Osmium E2E Test Inventory ===');
     for (const t of selectedTests) {
       const featsLabel = (t.features || [t.feature])
         .map((f) => `F${String(f).padStart(2, '0')}`)
@@ -236,7 +236,7 @@ async function main() {
 
   if (!opts.json) {
     console.log(
-      `Running ${selectedTests.length} Conductor E2E test(s)${opts.strictWorkspace ? ' [STRICT WORKSPACE]' : ''}...\n`
+      `Running ${selectedTests.length} Osmium E2E test(s)${opts.strictWorkspace ? ' [STRICT WORKSPACE]' : ''}...\n`
     );
   }
 
@@ -314,7 +314,7 @@ async function main() {
     );
   } else {
     console.log('\n============================================================');
-    console.log('Conductor E2E Summary by Tier:');
+    console.log('Osmium E2E Summary by Tier:');
     for (const tNum of [1, 2, 3, 4]) {
       const ts = tierStats[tNum];
       if (ts.total > 0 || !opts.tiers || opts.tiers.has(tNum)) {
@@ -324,7 +324,7 @@ async function main() {
       }
     }
     console.log('------------------------------------------------------------');
-    console.log('Conductor E2E Summary by Feature (F01..F24):');
+    console.log('Osmium E2E Summary by Feature (F01..F24):');
     const featureLines = [];
     for (const [fKey, fsStat] of Object.entries(featureStats)) {
       if (fsStat.total > 0) {

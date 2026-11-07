@@ -108,7 +108,7 @@ export function inspectWorkspace(rootDir = '/home/antigravity') {
 
 export function enforceStrictWorkspaceIfEnabled(ctx = {}, features = []) {
   const rootDir = ctx.rootDir || '/home/antigravity';
-  const strict = Boolean(ctx.strictWorkspace || process.env.CONDUCTOR_E2E_STRICT === '1');
+  const strict = Boolean(ctx.strictWorkspace || process.env.OSMIUM_E2E_STRICT === '1');
   const status = inspectWorkspace(rootDir);
   if (strict) {
     for (const f of features) {
@@ -130,10 +130,10 @@ export function runGit(cwd, args, extraEnv = {}) {
     cwd,
     env: {
       ...process.env,
-      GIT_AUTHOR_NAME: 'Conductor Test',
-      GIT_AUTHOR_EMAIL: 'conductor@example.local',
-      GIT_COMMITTER_NAME: 'Conductor Test',
-      GIT_COMMITTER_EMAIL: 'conductor@example.local',
+      GIT_AUTHOR_NAME: 'Osmium Test',
+      GIT_AUTHOR_EMAIL: 'osmium@example.local',
+      GIT_COMMITTER_NAME: 'Osmium Test',
+      GIT_COMMITTER_EMAIL: 'osmium@example.local',
       ...extraEnv,
     },
     encoding: 'utf8',
@@ -482,7 +482,7 @@ export function seedSampleRepository(repoDir) {
 
   fs.writeFileSync(
     path.join(repoDir, '.gitignore'),
-    'node_modules/\n.conductor/\ndist/\n*.log\n',
+    'node_modules/\n.osmium/\ndist/\n*.log\n',
     'utf8',
   );
 
@@ -506,7 +506,7 @@ export function seedSampleRepository(repoDir) {
 
   fs.writeFileSync(
     path.join(repoDir, 'README.md'),
-    '# api-gateway\n\nConductor sample workspace for Argon 4 E2E verification.\n',
+    '# api-gateway\n\nOsmium sample workspace for Argon 4 E2E verification.\n',
     'utf8',
   );
 
@@ -593,16 +593,16 @@ export function seedSampleRepository(repoDir) {
   runGit(repoDir, ['init', '-b', 'main']);
   runGit(repoDir, ['add', '.']);
   runGit(repoDir, ['commit', '-m', 'Initial commit for api-gateway']);
-  runGit(repoDir, ['branch', 'conductor/integration']);
+  runGit(repoDir, ['branch', 'osmium/integration']);
 }
 
 /**
- * Simple deterministic YAML serializer/parser for `.conductor/project.yaml`
+ * Simple deterministic YAML serializer/parser for `.osmium/project.yaml`
  * that preserves unknown top-level and nested keys (`zod` `.passthrough()` semantics).
  */
 export function serializeProjectYaml(config) {
   const lines = [
-    '# Conductor Project Configuration (YAML 1.2 / JSON subset + comments)',
+    '# Osmium Project Configuration (YAML 1.2 / JSON subset + comments)',
     `# project: ${config.name || 'api-gateway'}`,
     JSON.stringify(config, null, 2),
   ];
@@ -627,7 +627,7 @@ export function parseProjectYaml(rawText) {
     approvalMode: 'ask',
     routing: [],
     fallback: { onQuotaHit: 'next-secondary' },
-    teamwork: { maxParallel: 2, integrationBranch: 'conductor/integration' },
+    teamwork: { maxParallel: 2, integrationBranch: 'osmium/integration' },
   };
   let section = null;
   let currentRoute = null;
@@ -696,7 +696,7 @@ export function validateProjectConfig(input) {
     teamwork: {
       ...(input.teamwork || {}),
       maxParallel: Number(input.teamwork?.maxParallel ?? 2),
-      integrationBranch: input.teamwork?.integrationBranch || 'conductor/integration',
+      integrationBranch: input.teamwork?.integrationBranch || 'osmium/integration',
     },
   };
   assert.equal(validated.version, 1, 'ProjectConfig version must be 1');
@@ -743,20 +743,20 @@ export function isFileInScope(filePath, scopeGlobs) {
   return scopeGlobs.some((g) => matchGlob(filePath, g));
 }
 
-export class ConductorTestApp {
+export class OsmiumTestApp {
   constructor({ repoDir, homeDir, mockCliPath, rootDir = '/home/antigravity' }) {
     this.repoDir = fs.realpathSync(repoDir);
     this.homeDir = fs.realpathSync(homeDir);
     this.mockCliPath = mockCliPath;
     this.rootDir = rootDir;
-    this.conductorDir = path.join(this.repoDir, '.conductor');
-    fs.mkdirSync(this.conductorDir, { recursive: true });
-    this.dbPath = path.join(this.conductorDir, 'conductor.db');
+    this.osmiumDir = path.join(this.repoDir, '.osmium');
+    fs.mkdirSync(this.osmiumDir, { recursive: true });
+    this.dbPath = path.join(this.osmiumDir, 'osmium.db');
     this.db = new SqliteDatabase(this.dbPath);
-    this.extensionsDir = path.join(this.homeDir, '.conductor', 'extensions');
+    this.extensionsDir = path.join(this.homeDir, '.osmium', 'extensions');
     fs.mkdirSync(this.extensionsDir, { recursive: true });
     this.boundaryGuard = new WorkspaceBoundaryGuard(this.repoDir, [
-      path.join(this.homeDir, '.conductor'),
+      path.join(this.homeDir, '.osmium'),
     ]);
 
     this.capabilityCache = new Map();
@@ -793,13 +793,13 @@ export class ConductorTestApp {
 
   _registerBuiltInCommands() {
     const builtins = [
-      { id: 'conductor.newTask', title: 'New Task', shortcut: 'Ctrl+N' },
-      { id: 'conductor.toggleAgentPanel', title: 'Toggle Agent Panel', shortcut: 'Ctrl+L' },
-      { id: 'conductor.commandPalette', title: 'Show Command Palette', shortcut: 'Ctrl+K' },
-      { id: 'conductor.commandPaletteShift', title: 'Command Palette (IDE)', shortcut: 'Ctrl+Shift+P' },
-      { id: 'conductor.quickOpen', title: 'Quick Open File', shortcut: 'Ctrl+P' },
-      { id: 'conductor.switchTheme', title: 'Switch Theme (Light / Dark)', shortcut: 'Ctrl+T' },
-      { id: 'conductor.undoCheckpoint', title: 'Undo Last Agent Turn', shortcut: 'Ctrl+Z' },
+      { id: 'osmium.newTask', title: 'New Task', shortcut: 'Ctrl+N' },
+      { id: 'osmium.toggleAgentPanel', title: 'Toggle Agent Panel', shortcut: 'Ctrl+L' },
+      { id: 'osmium.commandPalette', title: 'Show Command Palette', shortcut: 'Ctrl+K' },
+      { id: 'osmium.commandPaletteShift', title: 'Command Palette (IDE)', shortcut: 'Ctrl+Shift+P' },
+      { id: 'osmium.quickOpen', title: 'Quick Open File', shortcut: 'Ctrl+P' },
+      { id: 'osmium.switchTheme', title: 'Switch Theme (Light / Dark)', shortcut: 'Ctrl+T' },
+      { id: 'osmium.undoCheckpoint', title: 'Undo Last Agent Turn', shortcut: 'Ctrl+Z' },
     ];
     for (const cmd of builtins) {
       this.registeredCommands.set(cmd.id, {
@@ -815,7 +815,7 @@ export class ConductorTestApp {
     const reqPath = path.join(this.rootDir, '.agents/teamwork/ORIGINAL_REQUEST.md');
     const planContent = fs.existsSync(reqPath)
       ? fs.readFileSync(reqPath, 'utf8')
-      : '# Conductor: Build Plan for Argon 4\n';
+      : '# Osmium: Build Plan for Argon 4\n';
     const planFile = path.join(docsDir, 'PLAN.md');
     this.boundaryGuard.assertWritable(planFile);
     fs.writeFileSync(planFile, planContent, 'utf8');
@@ -825,7 +825,7 @@ export class ConductorTestApp {
       fs.writeFileSync(
         progressFile,
         [
-          '# Conductor Progress Log',
+          '# Osmium Progress Log',
           '',
           '## 1. Done',
           '- Initialized `docs/PLAN.md` and `docs/PROGRESS.md`.',
@@ -834,7 +834,7 @@ export class ConductorTestApp {
           '- Subsequent phases pending.',
           '',
           '## 3. Decisions',
-          '- Using git plumbing checkpoints under `refs/conductor/checkpoints/`.',
+          '- Using git plumbing checkpoints under `refs/osmium/checkpoints/`.',
           '',
           '## 4. Problems',
           '- None.',
@@ -862,7 +862,7 @@ export class ConductorTestApp {
   }
 
   openProject(name = 'api-gateway', customConfig = {}) {
-    const configPath = path.join(this.conductorDir, 'project.yaml');
+    const configPath = path.join(this.osmiumDir, 'project.yaml');
     let existing = {};
     if (fs.existsSync(configPath)) {
       existing = parseProjectYaml(fs.readFileSync(configPath, 'utf8'));
@@ -913,14 +913,14 @@ export class ConductorTestApp {
   }
 
   getProjectConfig() {
-    const configPath = path.join(this.conductorDir, 'project.yaml');
+    const configPath = path.join(this.osmiumDir, 'project.yaml');
     return parseProjectYaml(fs.readFileSync(configPath, 'utf8'));
   }
 
   saveProjectConfig(partialUpdate) {
     const current = this.getProjectConfig();
     const updated = validateProjectConfig({ ...current, ...partialUpdate });
-    const configPath = path.join(this.conductorDir, 'project.yaml');
+    const configPath = path.join(this.osmiumDir, 'project.yaml');
     this.boundaryGuard.assertWritable(configPath);
     fs.writeFileSync(configPath, serializeProjectYaml(updated), 'utf8');
     return updated;
@@ -1031,11 +1031,11 @@ export class ConductorTestApp {
 
   createCheckpoint(sessionId, cwd = this.repoDir) {
     const checkpointId = `chk-${Date.now()}-${crypto.randomBytes(3).toString('hex')}`;
-    const refName = `refs/conductor/checkpoints/${checkpointId}`;
+    const refName = `refs/osmium/checkpoints/${checkpointId}`;
     const headShaBefore = runGit(cwd, ['rev-parse', 'HEAD']);
     const userBranchBefore = runGit(cwd, ['rev-parse', '--abbrev-ref', 'HEAD']);
 
-    const tmpIndex = path.join(os.tmpdir(), `conductor-idx-${checkpointId}`);
+    const tmpIndex = path.join(os.tmpdir(), `osmium-idx-${checkpointId}`);
     const gitIndexPath = path.join(cwd, '.git', 'index');
     if (fs.existsSync(gitIndexPath)) {
       fs.copyFileSync(gitIndexPath, tmpIndex);
@@ -1046,7 +1046,7 @@ export class ConductorTestApp {
       const treeSha = runGit(cwd, ['write-tree'], { GIT_INDEX_FILE: tmpIndex });
       const commitSha = runGit(
         cwd,
-        ['commit-tree', treeSha, '-p', headShaBefore, '-m', `conductor checkpoint ${checkpointId}`],
+        ['commit-tree', treeSha, '-p', headShaBefore, '-m', `osmium checkpoint ${checkpointId}`],
         { GIT_INDEX_FILE: tmpIndex },
       );
       runGit(cwd, ['update-ref', refName, commitSha]);
@@ -1079,7 +1079,7 @@ export class ConductorTestApp {
     assert.equal(rows.length, 1, `Checkpoint ${checkpointId} not found in SQLite`);
     const { commit_sha: baseSha } = rows[0];
 
-    const tmpIndex = path.join(os.tmpdir(), `conductor-diff-idx-${Date.now()}-${Math.random().toString(16).slice(2)}`);
+    const tmpIndex = path.join(os.tmpdir(), `osmium-diff-idx-${Date.now()}-${Math.random().toString(16).slice(2)}`);
     const gitIndexPath = path.join(cwd, '.git', 'index');
     if (fs.existsSync(gitIndexPath)) {
       fs.copyFileSync(gitIndexPath, tmpIndex);
@@ -1146,10 +1146,10 @@ export class ConductorTestApp {
     const treeFilesOut = runGit(cwd, ['ls-tree', '-r', '--name-only', commitSha]);
     const snapshotFiles = new Set(treeFilesOut ? treeFilesOut.split('\n').filter(Boolean) : []);
 
-    // Remove any tracked or untracked files created after the checkpoint (preserving .git and .conductor)
+    // Remove any tracked or untracked files created after the checkpoint (preserving .git and .osmium)
     const walkAndClean = (dir) => {
       for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-        if (entry.name === '.git' || entry.name === '.conductor') continue;
+        if (entry.name === '.git' || entry.name === '.osmium') continue;
         const abs = path.join(dir, entry.name);
         const rel = path.relative(cwd, abs).replace(/\\/g, '/');
         if (entry.isDirectory()) {
@@ -1423,7 +1423,7 @@ export class ConductorTestApp {
       .filter((e) => e.type === 'file-edit')
       .map((e) => `${e.payload.path} (+${e.payload.added}/-${e.payload.removed})`);
     return [
-      '[Conductor Handoff Summary]',
+      '[Osmium Handoff Summary]',
       `Messages (${messages.length}): ${messages.join(' | ')}`,
       `Edited Files (${editedFiles.length}): ${editedFiles.join(', ') || 'none'}`,
     ].join('\n');
@@ -1640,7 +1640,7 @@ export class ConductorTestApp {
   startTeamworkRun(plan, projectId = 'proj-api-gateway') {
     const cfg = this.getProjectConfig();
     const runId = `tw-${Date.now()}-${crypto.randomBytes(2).toString('hex')}`;
-    const integrationBranch = cfg.teamwork?.integrationBranch || 'conductor/integration';
+    const integrationBranch = cfg.teamwork?.integrationBranch || 'osmium/integration';
     const maxParallel = cfg.teamwork?.maxParallel || 2;
 
     // Ensure integrationBranch exists
@@ -1663,12 +1663,12 @@ export class ConductorTestApp {
       );
     `);
 
-    const worktreesRoot = path.join(this.conductorDir, 'worktrees');
+    const worktreesRoot = path.join(this.osmiumDir, 'worktrees');
     fs.mkdirSync(worktreesRoot, { recursive: true });
 
     for (const t of plan.tasks) {
       const wtPath = path.join(worktreesRoot, t.id);
-      const branchName = `conductor/task/${runId}-${t.id}`;
+      const branchName = `osmium/task/${runId}-${t.id}`;
       if (!fs.existsSync(wtPath)) {
         runGit(this.repoDir, ['worktree', 'add', '-b', branchName, wtPath, integrationBranch]);
       }
@@ -2009,7 +2009,7 @@ export class ConductorTestApp {
   readExplorerTree(relDir = '') {
     const absDir = path.join(this.repoDir, relDir);
     const ignoreFile = path.join(this.repoDir, '.gitignore');
-    const ignoredNames = new Set(['.git', '.conductor', 'node_modules', 'dist']);
+    const ignoredNames = new Set(['.git', '.osmium', 'node_modules', 'dist']);
     if (fs.existsSync(ignoreFile)) {
       for (const l of fs.readFileSync(ignoreFile, 'utf8').split('\n')) {
         const clean = l.trim().replace(/\/$/, '');
@@ -2250,7 +2250,7 @@ export class ConductorTestApp {
       return { action: 'Ask to change', chip };
     }
 
-    const tmpPatch = path.join(os.tmpdir(), `conductor-hunk-${Date.now()}.patch`);
+    const tmpPatch = path.join(os.tmpdir(), `osmium-hunk-${Date.now()}.patch`);
     fs.writeFileSync(tmpPatch, targetHunk.patch, 'utf8');
     try {
       if (action === 'Accept') {
@@ -2371,7 +2371,7 @@ export class ConductorTestApp {
       },
       statusBar: {
         background: '#2F6B4F',
-        left: ['conductor/integration', `${diag.problemsCount} problems`],
+        left: ['osmium/integration', `${diag.problemsCount} problems`],
         right: ['TypeScript', 'UTF-8 · LF', 'Ln 5, Col 12', 'Codex CLI'],
       },
     };
@@ -2483,7 +2483,7 @@ export class ConductorTestApp {
   }
 
   loadExtensionFromFolder(extFolder, options = {}) {
-    const manifestPath = path.join(extFolder, 'conductor.json');
+    const manifestPath = path.join(extFolder, 'osmium.json');
     assert.ok(fs.existsSync(manifestPath), `Extension manifest missing: ${manifestPath}`);
     const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
 
@@ -2561,8 +2561,8 @@ export class ConductorTestApp {
 
   verifyReleaseAndGovernanceBundle(targetDir = this.repoDir) {
     const builderConfig = {
-      appId: 'dev.conductor.app',
-      productName: 'Conductor',
+      appId: 'dev.osmium.app',
+      productName: 'Osmium',
       publish: null,
       autoUpdate: false,
       linux: { target: ['AppImage', 'deb'] },
@@ -2574,8 +2574,8 @@ export class ConductorTestApp {
       fs.writeFileSync(
         builderPath,
         [
-          'appId: dev.conductor.app',
-          'productName: Conductor',
+          'appId: dev.osmium.app',
+          'productName: Osmium',
           'autoUpdate: false',
           'publish: null',
           'linux:',
@@ -2591,11 +2591,11 @@ export class ConductorTestApp {
     }
 
     const govDocs = {
-      'README.md': '# Conductor\n\nOfficial CLIs only. Check each provider terms of service.\n',
-      'CONTRIBUTING.md': '# Contributing to Conductor\n\nUse the Adapter SDK template and contract test suite.\n',
+      'README.md': '# Osmium\n\nOfficial CLIs only. Check each provider terms of service.\n',
+      'CONTRIBUTING.md': '# Contributing to Osmium\n\nUse the Adapter SDK template and contract test suite.\n',
       'CODE_OF_CONDUCT.md': '# Code of Conduct\n\nBe respectful and constructive.\n',
-      'SECURITY.md': '# Security Policy\n\nConductor never reads, copies, stores, or forwards provider tokens or API keys.\n',
-      'docs/ROADMAP.md': '# Conductor Public Roadmap\n\n- Phase 0..7 & IDE-1..5\n',
+      'SECURITY.md': '# Security Policy\n\nOsmium never reads, copies, stores, or forwards provider tokens or API keys.\n',
+      'docs/ROADMAP.md': '# Osmium Public Roadmap\n\n- Phase 0..7 & IDE-1..5\n',
     };
     for (const [rel, defaultText] of Object.entries(govDocs)) {
       const abs = path.join(targetDir, rel);
@@ -2622,9 +2622,9 @@ export class ConductorTestApp {
   }
 }
 
-export async function withTempConductorEnv(ctx = {}, features = [], fn) {
+export async function withTempOsmiumEnv(ctx = {}, features = [], fn) {
   const workspaceStatus = enforceStrictWorkspaceIfEnabled(ctx, features);
-  const tmpBase = fs.mkdtempSync(path.join(os.tmpdir(), 'conductor-e2e-t34-'));
+  const tmpBase = fs.mkdtempSync(path.join(os.tmpdir(), 'osmium-e2e-t34-'));
   const repoDir = path.join(tmpBase, 'api-gateway');
   const homeDir = path.join(tmpBase, 'home');
   const binDir = path.join(tmpBase, 'bin');
@@ -2634,7 +2634,7 @@ export async function withTempConductorEnv(ctx = {}, features = [], fn) {
   try {
     seedSampleRepository(repoDir);
     const mockCliPath = createMockCliScript(binDir);
-    const app = new ConductorTestApp({
+    const app = new OsmiumTestApp({
       repoDir,
       homeDir,
       mockCliPath,
@@ -2649,7 +2649,7 @@ export async function withTempConductorEnv(ctx = {}, features = [], fn) {
       mockCliPath,
       workspaceStatus,
       restartApp: () =>
-        new ConductorTestApp({
+        new OsmiumTestApp({
           repoDir,
           homeDir,
           mockCliPath,

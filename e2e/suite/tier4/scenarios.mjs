@@ -5,7 +5,7 @@ import {
   DESIGN_TOKENS_DARK,
   DESIGN_TOKENS_LIGHT,
   runGit,
-  withTempConductorEnv,
+  withTempOsmiumEnv,
 } from '../helpers/t34-harness.mjs';
 
 export const tests = [
@@ -16,7 +16,7 @@ export const tests = [
     features: [1, 2, 4, 9, 24],
     title: 'First Run, Project Open, & CLI Hub Detection + Capability Probe + Home Screen Status Chips',
     async fn(ctx = {}) {
-      await withTempConductorEnv(ctx, [1, 2, 4, 9, 24], async ({ app, repoDir, mockCliPath }) => {
+      await withTempOsmiumEnv(ctx, [1, 2, 4, 9, 24], async ({ app, repoDir, mockCliPath }) => {
         const docs = app.initGovernanceAndPlanDocs(repoDir);
         assert.ok(fs.existsSync(docs.planFile), 'docs/PLAN.md must be initialized on first run');
         assert.ok(fs.existsSync(docs.progressFile), 'docs/PROGRESS.md must be initialized on first run');
@@ -27,8 +27,8 @@ export const tests = [
           approvalMode: 'ask',
         });
         assert.equal(opened.projectId, 'proj-api-gateway');
-        assert.ok(fs.existsSync(opened.configPath), '.conductor/project.yaml must exist');
-        assert.ok(fs.existsSync(app.dbPath), '.conductor/conductor.db SQLite database must exist');
+        assert.ok(fs.existsSync(opened.configPath), '.osmium/project.yaml must exist');
+        assert.ok(fs.existsSync(app.dbPath), '.osmium/osmium.db SQLite database must exist');
 
         const mockProbe = app.probeCli('mock', { binaryPath: mockCliPath });
         assert.equal(mockProbe.installed, true);
@@ -72,7 +72,7 @@ export const tests = [
     features: [2, 5, 6, 7, 11],
     title: 'Full Chat Session with mock-cli (Streaming, Tool Lines, Approval Prompt, Cancel, SQLite Restart Persistence)',
     async fn(ctx = {}) {
-      await withTempConductorEnv(ctx, [2, 5, 6, 7, 11], async ({ app, restartApp }) => {
+      await withTempOsmiumEnv(ctx, [2, 5, 6, 7, 11], async ({ app, restartApp }) => {
         const session = app.startSession({
           title: 'Add copy review brief',
           cliId: 'codex',
@@ -140,7 +140,7 @@ export const tests = [
     features: [3, 6, 8, 12, 19],
     title: 'Agent File Edit, Right-Pane Diff Inspection, and Checkpoint Undo Restoring Working Tree Byte-for-Byte',
     async fn(ctx = {}) {
-      await withTempConductorEnv(ctx, [3, 6, 8, 12, 19], async ({ app, repoDir }) => {
+      await withTempOsmiumEnv(ctx, [3, 6, 8, 12, 19], async ({ app, repoDir }) => {
         const compareModelPath = path.join(repoDir, 'src/compare-model.ts');
         const compareViewPath = path.join(repoDir, 'src/CompareView.tsx');
         const briefPath = path.join(repoDir, 'src/lib/brief.ts');
@@ -158,7 +158,7 @@ export const tests = [
 
         // User branch HEAD is untouched by checkpoint creation
         assert.equal(runGit(repoDir, ['rev-parse', 'HEAD']), headBefore);
-        assert.ok(turn.checkpoint.refName.startsWith('refs/conductor/checkpoints/'));
+        assert.ok(turn.checkpoint.refName.startsWith('refs/osmium/checkpoints/'));
 
         // Inspect diff & Edited 3 files card
         const diff = app.getCheckpointDiff(turn.checkpoint.checkpointId);
@@ -183,7 +183,7 @@ export const tests = [
     features: [4, 5, 7, 9, 10],
     title: 'Multi-CLI Project (codex Primary, antigravity & deepseek Secondary) with Mid-Session Switch & Handoff Line',
     async fn(ctx = {}) {
-      await withTempConductorEnv(ctx, [4, 5, 7, 9, 10], async ({ app }) => {
+      await withTempOsmiumEnv(ctx, [4, 5, 7, 9, 10], async ({ app }) => {
         const cfg = app.saveProjectConfig({
           primary: 'codex',
           secondary: ['antigravity', 'deepseek'],
@@ -215,7 +215,7 @@ export const tests = [
           scenario: 'review',
           readOnly: true,
         });
-        assert.ok(turn2.systemContextUsed.includes('[Conductor Handoff Summary]'));
+        assert.ok(turn2.systemContextUsed.includes('[Osmium Handoff Summary]'));
 
         // Switch to third CLI (deepseek) and verify cumulative context
         const switchToDeepseek = await app.runSlashCommand(session.id, '/cli deepseek');
@@ -231,7 +231,7 @@ export const tests = [
     features: [5, 8, 11, 12],
     title: '/plan & /review End-to-End Workflow (Editable Checklist Gate + Secondary CLI Read-Only Review)',
     async fn(ctx = {}) {
-      await withTempConductorEnv(ctx, [5, 8, 11, 12], async ({ app, repoDir }) => {
+      await withTempOsmiumEnv(ctx, [5, 8, 11, 12], async ({ app, repoDir }) => {
         const session = app.startSession({ cliId: 'codex', title: 'Plan and Review workflow' });
 
         // 1. User types /plan -> generates checklist without editing any files
@@ -263,9 +263,9 @@ export const tests = [
     tier: 4,
     feature: 13,
     features: [3, 9, 12, 13, 19],
-    title: '/teamwork Happy Path Splitting a Goal into 4 Tasks Across 3 CLIs in Isolated .conductor/worktrees/ and Merging Cleanly',
+    title: '/teamwork Happy Path Splitting a Goal into 4 Tasks Across 3 CLIs in Isolated .osmium/worktrees/ and Merging Cleanly',
     async fn(ctx = {}) {
-      await withTempConductorEnv(ctx, [3, 9, 12, 13, 19], async ({ app, repoDir }) => {
+      await withTempOsmiumEnv(ctx, [3, 9, 12, 13, 19], async ({ app, repoDir }) => {
         const session = app.startSession({ cliId: 'codex' });
         const plan = await app.runSlashCommand(session.id, '/teamwork Add copy review brief');
         assert.equal(plan.valid, true);
@@ -282,7 +282,7 @@ export const tests = [
         assert.equal(board.columns.REVIEW.length, 4);
         assert.ok(board.tasks.every((t) => t.outOfScopeFiles.length === 0));
 
-        // Merge all 4 tasks cleanly into conductor/integration in dependency order
+        // Merge all 4 tasks cleanly into osmium/integration in dependency order
         for (const task of plan.tasks) {
           const mergeRes = app.mergeTeamworkTask(runId, task.id);
           assert.equal(mergeRes.merged, true, `Expected ${task.id} to merge cleanly`);
@@ -292,7 +292,7 @@ export const tests = [
         const finalBoard = app.getTeamworkBoardState(runId);
         assert.equal(finalBoard.columns.DONE.length, 4);
 
-        // Checkout conductor/integration and verify all 4 task artifacts exist
+        // Checkout osmium/integration and verify all 4 task artifacts exist
         runGit(repoDir, ['checkout', integrationBranch]);
         assert.ok(fs.readFileSync(path.join(repoDir, 'src/routes/compare.ts'), 'utf8').includes('Clipboard unavailable'));
         assert.ok(fs.readFileSync(path.join(repoDir, 'src/lib/brief.ts'), 'utf8').includes('buildMarkdownBrief'));
@@ -308,7 +308,7 @@ export const tests = [
     features: [1, 7, 13],
     title: 'App Kill and Restart Mid-/teamwork Run with Automatic Scheduler Resumption from SQLite & Worktrees',
     async fn(ctx = {}) {
-      await withTempConductorEnv(ctx, [1, 7, 13], async ({ app, repoDir, restartApp }) => {
+      await withTempOsmiumEnv(ctx, [1, 7, 13], async ({ app, repoDir, restartApp }) => {
         const plan = app.planTeamwork('Add copy review brief');
         const { runId, integrationBranch } = app.startTeamworkRun(plan);
 
@@ -348,7 +348,7 @@ export const tests = [
     features: [6, 7, 10, 13, 14],
     title: 'Simulated Quota Limit Hit (limitHit: true) Moving a Running Task to the Next Secondary CLI and Updating Board Badge',
     async fn(ctx = {}) {
-      await withTempConductorEnv(ctx, [6, 7, 10, 13, 14], async ({ app }) => {
+      await withTempOsmiumEnv(ctx, [6, 7, 10, 13, 14], async ({ app }) => {
         app.saveProjectConfig({
           primary: 'codex',
           secondary: ['antigravity', 'deepseek'],
@@ -391,7 +391,7 @@ export const tests = [
     features: [3, 15, 16, 17, 18, 21],
     title: 'IDE Workbench Workflow: Lazy Explorer, Multi-Tab Monaco Edit, Disk-Conflict Guard, Ripgrep Replace, Terminal Fix This Error & Layout Restore',
     async fn(ctx = {}) {
-      await withTempConductorEnv(ctx, [3, 15, 16, 17, 18, 21], async ({ app, repoDir, restartApp }) => {
+      await withTempOsmiumEnv(ctx, [3, 15, 16, 17, 18, 21], async ({ app, repoDir, restartApp }) => {
         // Create brief.ts and modify compare.ts + auth.ts to match IDE screenshot state
         fs.writeFileSync(
           path.join(repoDir, 'src/lib/brief.ts'),
@@ -403,7 +403,7 @@ export const tests = [
 
         const rootTree = app.readExplorerTree('');
         assert.ok(rootTree.some((e) => e.name === 'src' && e.lazyChildren === true));
-        assert.ok(!rootTree.some((e) => e.name === '.conductor'), '.gitignore entries must be hidden in Explorer');
+        assert.ok(!rootTree.some((e) => e.name === '.osmium'), '.gitignore entries must be hidden in Explorer');
 
         const routesTree = app.readExplorerTree('src/routes');
         assert.equal(routesTree.find((e) => e.name === 'compare.ts').gitStatus, 'M');
@@ -461,8 +461,8 @@ export const tests = [
     features: [8, 13, 19, 21],
     title: 'Source Control Inline Hunk Review (Accept, Reject, Ask to change, Accept all, Reject all), Commit, and 3-Way Merge Conflict Resolution',
     async fn(ctx = {}) {
-      await withTempConductorEnv(ctx, [8, 13, 19, 21], async ({ app, repoDir }) => {
-        runGit(repoDir, ['checkout', 'conductor/integration']);
+      await withTempOsmiumEnv(ctx, [8, 13, 19, 21], async ({ app, repoDir }) => {
+        runGit(repoDir, ['checkout', 'osmium/integration']);
 
         const compareRel = 'src/routes/compare.ts';
         fs.writeFileSync(
@@ -521,7 +521,7 @@ export const tests = [
         );
         runGit(repoDir, ['commit', '-am', 'Theirs change']);
 
-        runGit(repoDir, ['checkout', 'conductor/integration']);
+        runGit(repoDir, ['checkout', 'osmium/integration']);
         fs.writeFileSync(
           path.join(repoDir, compareRel),
           "export const conflictTarget = 'ours-integration-version';\n",
@@ -550,7 +550,7 @@ export const tests = [
     features: [6, 16, 20, 21, 22],
     title: 'IDE Code Intelligence (TS/Python Diagnostics, Problems Panel, Context Chips @compare.ts, @selection, @problems, Follow agent)',
     async fn(ctx = {}) {
-      await withTempConductorEnv(ctx, [6, 16, 20, 21, 22], async ({ app, repoDir }) => {
+      await withTempOsmiumEnv(ctx, [6, 16, 20, 21, 22], async ({ app, repoDir }) => {
         fs.writeFileSync(
           path.join(repoDir, 'src/script.py'),
           'def compute_delta(a: int, b: int) -> int:\n    return a - b\n',
@@ -595,9 +595,9 @@ export const tests = [
     tier: 4,
     feature: 23,
     features: [1, 2, 3, 4, 23, 24],
-    title: 'Third-Party Adapter SDK Template Loading & ~/.conductor/extensions/ Theme/LSP Loading + Dark Theme Token Swap & Governance Docs',
+    title: 'Third-Party Adapter SDK Template Loading & ~/.osmium/extensions/ Theme/LSP Loading + Dark Theme Token Swap & Governance Docs',
     async fn(ctx = {}) {
-      await withTempConductorEnv(ctx, [1, 2, 3, 4, 23, 24], async ({ app, repoDir, homeDir, mockCliPath }) => {
+      await withTempOsmiumEnv(ctx, [1, 2, 3, 4, 23, 24], async ({ app, repoDir, homeDir, mockCliPath }) => {
         // 1. Load custom third-party adapter from user folder and run all 7 contract tests
         const thirdPartyDir = path.join(homeDir, 'user-adapters', 'custom-agent-cli');
         fs.mkdirSync(thirdPartyDir, { recursive: true });
@@ -621,11 +621,11 @@ export const tests = [
         const adapterRes = await app.loadThirdPartyAdapterFromFolder(thirdPartyDir);
         assert.equal(adapterRes.allPassed, true);
 
-        // 2. Load sample-theme and sample-lsp extensions from ~/.conductor/extensions/
+        // 2. Load sample-theme and sample-lsp extensions from ~/.osmium/extensions/
         const themeExtDir = path.join(app.extensionsDir, 'sample-theme');
         fs.mkdirSync(themeExtDir, { recursive: true });
         fs.writeFileSync(
-          path.join(themeExtDir, 'conductor.json'),
+          path.join(themeExtDir, 'osmium.json'),
           JSON.stringify({
             name: 'sample-theme',
             version: '1.0.0',
@@ -642,7 +642,7 @@ export const tests = [
         const lspExtDir = path.join(app.extensionsDir, 'sample-lsp');
         fs.mkdirSync(lspExtDir, { recursive: true });
         fs.writeFileSync(
-          path.join(lspExtDir, 'conductor.json'),
+          path.join(lspExtDir, 'osmium.json'),
           JSON.stringify({
             name: 'sample-lsp',
             version: '1.0.0',

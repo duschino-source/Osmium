@@ -1,4 +1,4 @@
-# Conductor (Argon 4) — E2E Test Suite Readiness Manifest (`TEST_READY.md`)
+# Osmium (Argon 4) — E2E Test Suite Readiness Manifest (`TEST_READY.md`)
 
 **Status**: `READY`
 **Total E2E Test Cases**: **`276`** (`120` Tier 1 + `120` Tier 2 + `24` Tier 3 + `12` Tier 4)
@@ -58,7 +58,7 @@ node /home/antigravity/e2e/runner.mjs --strict-workspace
 | **F06** | `packages/mock-cli` Scripted CLI | `T1-F06-01` .. `T1-F06-05` (5) | `T2-F06-01` .. `T2-F06-05` (5) | `T3-PW-01`, `T3-PW-03`, `T3-PW-19` | `T4-SC-02`, `T4-SC-03`, `T4-SC-08`, `T4-SC-11` |
 | **F07** | Session Manager & SQLite Event Log | `T1-F07-01` .. `T1-F07-05` (5) | `T2-F07-01` .. `T2-F07-05` (5) | `T3-PW-01`, `T3-PW-02`, `T3-PW-04`, `T3-PW-10`, `T3-PW-11`, `T3-PW-23` | `T4-SC-02`, `T4-SC-04`, `T4-SC-07`, `T4-SC-08` |
 | **F08** | Pre-Turn Git Checkpoints & Undo | `T1-F08-01` .. `T1-F08-05` (5) | `T2-F08-01` .. `T2-F08-05` (5) | `T3-PW-01`, `T3-PW-02`, `T3-PW-03`, `T3-PW-06`, `T3-PW-07`, `T3-PW-15`, `T3-PW-17` | `T4-SC-03`, `T4-SC-05`, `T4-SC-10` |
-| **F09** | `.conductor/project.yaml` Config | `T1-F09-01` .. `T1-F09-05` (5) | `T2-F09-01` .. `T2-F09-05` (5) | `T3-PW-04`, `T3-PW-08`, `T3-PW-24` | `T4-SC-01`, `T4-SC-04`, `T4-SC-06` |
+| **F09** | `.osmium/project.yaml` Config | `T1-F09-01` .. `T1-F09-05` (5) | `T2-F09-01` .. `T2-F09-05` (5) | `T3-PW-04`, `T3-PW-08`, `T3-PW-24` | `T4-SC-01`, `T4-SC-04`, `T4-SC-06` |
 | **F10** | Mid-Session CLI Handoff | `T1-F10-01` .. `T1-F10-05` (5) | `T2-F10-01` .. `T2-F10-05` (5) | `T3-PW-04`, `T3-PW-05` | `T4-SC-04`, `T4-SC-08` |
 | **F11** | Interactive Approval Gate | `T1-F11-01` .. `T1-F11-05` (5) | `T2-F11-01` .. `T2-F11-05` (5) | `T3-PW-03`, `T3-PW-06` | `T4-SC-02`, `T4-SC-05` |
 | **F12** | Slash Commands (`/plan`, `/review`, `/teamwork`, `/cli`, `/undo`) | `T1-F12-01` .. `T1-F12-05` (5) | `T2-F12-01` .. `T2-F12-05` (5) | `T3-PW-02`, `T3-PW-06`, `T3-PW-07`, `T3-PW-08` | `T4-SC-03`, `T4-SC-05`, `T4-SC-06` |
@@ -72,7 +72,7 @@ node /home/antigravity/e2e/runner.mjs --strict-workspace
 | **F20** | Code Intelligence & LSP Manager | `T1-F20-01` .. `T1-F20-05` (5) | `T2-F20-01` .. `T2-F20-05` (5) | `T3-PW-18`, `T3-PW-20` | `T4-SC-11` |
 | **F21** | Docked Agent Panel, Context Chips & Follow Agent | `T1-F21-01` .. `T1-F21-05` (5) | `T2-F21-01` .. `T2-F21-05` (5) | `T3-PW-12`, `T3-PW-16`, `T3-PW-17`, `T3-PW-18`, `T3-PW-19` | `T4-SC-09`, `T4-SC-10`, `T4-SC-11` |
 | **F22** | Tasks Runner & DAP Debugger | `T1-F22-01` .. `T1-F22-05` (5) | `T2-F22-01` .. `T2-F22-05` (5) | `T3-PW-16`, `T3-PW-20` | `T4-SC-11` |
-| **F23** | Adapter SDK & `~/.conductor/extensions/` API | `T1-F23-01` .. `T1-F23-05` (5) | `T2-F23-01` .. `T2-F23-05` (5) | `T3-PW-21`, `T3-PW-22` | `T4-SC-12` |
+| **F23** | Adapter SDK & `~/.osmium/extensions/` API | `T1-F23-01` .. `T1-F23-05` (5) | `T2-F23-01` .. `T2-F23-05` (5) | `T3-PW-21`, `T3-PW-22` | `T4-SC-12` |
 | **F24** | Design System, Command Registry, Palette, Replay, Dark Theme & Release | `T1-F24-01` .. `T1-F24-05` (5) | `T2-F24-01` .. `T2-F24-05` (5) | `T3-PW-22`, `T3-PW-23`, `T3-PW-24` | `T4-SC-01`, `T4-SC-12` |
 
 ---
@@ -84,10 +84,10 @@ node /home/antigravity/e2e/runner.mjs --strict-workspace
 3. **`T4-SC-03`**: Agent File Edit, Right-Pane Diff Inspection, and Checkpoint `Undo` Restoring Working Tree Byte-for-Byte
 4. **`T4-SC-04`**: Multi-CLI Project (`codex` Primary, `antigravity` & `deepseek` Secondary) with Mid-Session Switch & Handoff Line
 5. **`T4-SC-05`**: `/plan` & `/review` End-to-End Workflow (Editable Checklist Gate + Secondary CLI Read-Only Review)
-6. **`T4-SC-06`**: `/teamwork` Happy Path Splitting a Goal into 4 Tasks Across 3 CLIs in Isolated `.conductor/worktrees/` and Merging Cleanly into `conductor/integration`
+6. **`T4-SC-06`**: `/teamwork` Happy Path Splitting a Goal into 4 Tasks Across 3 CLIs in Isolated `.osmium/worktrees/` and Merging Cleanly into `osmium/integration`
 7. **`T4-SC-07`**: App Kill and Restart Mid-`/teamwork` Run with Automatic Scheduler Resumption
 8. **`T4-SC-08`**: Simulated Quota Limit Hit (`limitHit: true`) Moving a Running Task to the Next Secondary CLI
 9. **`T4-SC-09`**: IDE Workbench Workflow: Lazy Explorer, Multi-Tab Monaco Edit, Disk-Conflict Guard, Ripgrep Search & Replace, Terminal `Fix this error`
 10. **`T4-SC-10`**: Source Control Inline Hunk Review (`Accept`, `Reject`, `Ask to change`, `Accept all`, `Reject all`), Commit, and 3-Way Merge Conflict Resolution
 11. **`T4-SC-11`**: IDE Code Intelligence (TS/Python Diagnostics, Problems Panel, Context Chips `@compare.ts`, `@selection`, `@problems`, `Follow agent`)
-12. **`T4-SC-12`**: Third-Party Adapter SDK Template Loading & `~/.conductor/extensions/` Theme/LSP Loading + Dark Theme Token Swap & Governance Docs
+12. **`T4-SC-12`**: Third-Party Adapter SDK Template Loading & `~/.osmium/extensions/` Theme/LSP Loading + Dark Theme Token Swap & Governance Docs

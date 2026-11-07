@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { TeamworkPlanSchema } from '@conductor/core';
+import { TeamworkPlanSchema } from '@osmium/core';
 import {
   MOCK_CLI_VERSION,
   parseMockCliArgs,
@@ -15,7 +15,7 @@ import {
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-describe('@conductor/mock-cli scenarios & subprocess execution', () => {
+describe('@osmium/mock-cli scenarios & subprocess execution', () => {
   it('parses CLI flags and supports --version and --help', () => {
     expect(parseMockCliArgs(['--version']).version).toBe(true);
     expect(parseMockCliArgs(['--help']).help).toBe(true);
@@ -58,7 +58,7 @@ describe('@conductor/mock-cli scenarios & subprocess execution', () => {
   });
 
   it('emits file-edit event and writes file inside cwd when --write-file is enabled', async () => {
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'conductor-mock-cli-'));
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'osmium-mock-cli-'));
     try {
       const opts = parseMockCliArgs([
         '--scenario',

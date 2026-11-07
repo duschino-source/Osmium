@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { CommandRegistry, IPC_CHANNELS } from '../index.js';
 
-describe('@conductor/ide-core IPC channels & CommandRegistry', () => {
+describe('@osmium/ide-core IPC channels & CommandRegistry', () => {
   it('defines all required IPC channels for cli, session, checkpoint, project, teamwork, and ide', () => {
     expect(IPC_CHANNELS.CLI_DETECT_ALL).toBe('cli:detectAll');
     expect(IPC_CHANNELS.SESSION_START).toBe('session:start');
@@ -16,7 +16,7 @@ describe('@conductor/ide-core IPC channels & CommandRegistry', () => {
     const registry = new CommandRegistry();
     registry.register(
       {
-        id: 'conductor.toggleAgentPanel',
+        id: 'osmium.toggleAgentPanel',
         title: 'Toggle Agent Panel',
         category: 'Agent',
         keybinding: 'Ctrl+L',
@@ -24,16 +24,14 @@ describe('@conductor/ide-core IPC channels & CommandRegistry', () => {
       (visible: unknown) => ({ visible: Boolean(visible) }),
     );
 
-    expect(registry.has('conductor.toggleAgentPanel')).toBe(true);
+    expect(registry.has('osmium.toggleAgentPanel')).toBe(true);
     expect(registry.list()).toHaveLength(1);
 
-    const res = await registry.execute<{ visible: boolean }>('conductor.toggleAgentPanel', true);
+    const res = await registry.execute<{ visible: boolean }>('osmium.toggleAgentPanel', true);
     expect(res).toEqual({ visible: true });
 
-    registry.unregister('conductor.toggleAgentPanel');
-    expect(registry.has('conductor.toggleAgentPanel')).toBe(false);
-    await expect(registry.execute('conductor.toggleAgentPanel')).rejects.toThrow(
-      /Command not found/,
-    );
+    registry.unregister('osmium.toggleAgentPanel');
+    expect(registry.has('osmium.toggleAgentPanel')).toBe(false);
+    await expect(registry.execute('osmium.toggleAgentPanel')).rejects.toThrow(/Command not found/);
   });
 });

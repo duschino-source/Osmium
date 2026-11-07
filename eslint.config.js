@@ -8,7 +8,7 @@ export default [
       '**/node_modules/**',
       '**/dist/**',
       '**/out/**',
-      '**/.conductor/**',
+      '**/.osmium/**',
       '**/coverage/**',
       '**/playwright-report/**',
       '**/test-results/**',

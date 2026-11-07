@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
-const conductorBridge = {
+const osmiumBridge = {
   cli: {
     detectAll: () => ipcRenderer.invoke('cli:detectAll'),
     detect: (id: string) => ipcRenderer.invoke('cli:detect', id),
@@ -141,4 +141,4 @@ const conductorBridge = {
   },
 };
 
-contextBridge.exposeInMainWorld('conductor', conductorBridge);
+contextBridge.exposeInMainWorld('osmium', osmiumBridge);

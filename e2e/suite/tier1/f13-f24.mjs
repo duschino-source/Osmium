@@ -8,7 +8,7 @@ import {
   withTempDir,
   withTempGitRepo,
   gitExec,
-  ConductorSqliteStore,
+  OsmiumSqliteStore,
   validateTeamworkPlan,
   routeTeamworkTasks,
   createTaskWorktree,
@@ -109,17 +109,17 @@ export const tests = [
     tier: 1,
     feature: 13,
     features: [13],
-    title: 'Worktree manager creates isolated git worktrees in .conductor/worktrees/<task-id> branched from conductor/integration',
+    title: 'Worktree manager creates isolated git worktrees in .osmium/worktrees/<task-id> branched from osmium/integration',
     async fn() {
       await withTempGitRepo(async (repoDir) => {
-        const wt1 = createTaskWorktree(repoDir, 'task-1', 'conductor/integration');
-        const wt2 = createTaskWorktree(repoDir, 'task-2', 'conductor/integration');
+        const wt1 = createTaskWorktree(repoDir, 'task-1', 'osmium/integration');
+        const wt2 = createTaskWorktree(repoDir, 'task-2', 'osmium/integration');
         assert.ok(fs.existsSync(path.join(wt1.worktreePath, 'package.json')));
         assert.ok(fs.existsSync(path.join(wt2.worktreePath, 'package.json')));
         const branch1 = gitExec(wt1.worktreePath, ['symbolic-ref', '--short', 'HEAD']);
         const branch2 = gitExec(wt2.worktreePath, ['symbolic-ref', '--short', 'HEAD']);
-        assert.equal(branch1, 'conductor/task/task-1');
-        assert.equal(branch2, 'conductor/task/task-2');
+        assert.equal(branch1, 'osmium/task/task-1');
+        assert.equal(branch2, 'osmium/task/task-2');
       });
     },
   },
@@ -151,10 +151,10 @@ export const tests = [
     tier: 1,
     feature: 13,
     features: [13],
-    title: 'Merge manager merges completed task worktree branches cleanly into conductor/integration',
+    title: 'Merge manager merges completed task worktree branches cleanly into osmium/integration',
     async fn() {
       await withTempGitRepo(async (repoDir) => {
-        const wt1 = createTaskWorktree(repoDir, 'task-brief', 'conductor/integration');
+        const wt1 = createTaskWorktree(repoDir, 'task-brief', 'osmium/integration');
         fs.writeFileSync(
           path.join(wt1.worktreePath, 'src/lib/brief.ts'),
           'export function toBrief(rows: unknown[]): string {\n  return rows.map(String).join("\\n");\n}\n',
@@ -163,7 +163,7 @@ export const tests = [
         gitExec(wt1.worktreePath, ['add', 'src/lib/brief.ts']);
         gitExec(wt1.worktreePath, ['commit', '-m', 'Implement markdown brief builder']);
 
-        const merged = mergeTaskBranchIntoIntegration(repoDir, 'task-brief', 'conductor/integration');
+        const merged = mergeTaskBranchIntoIntegration(repoDir, 'task-brief', 'osmium/integration');
         assert.equal(merged.merged, true);
         const integrationContent = fs.readFileSync(path.join(repoDir, 'src/lib/brief.ts'), 'utf8');
         assert.ok(integrationContent.includes('rows.map(String)'));
@@ -182,7 +182,7 @@ export const tests = [
     title: 'Usage tracker increments turns_run per CLI in SQLite cli_usage table after each completed turn',
     async fn() {
       await withTempDir(async (tmpDir) => {
-        const store = new ConductorSqliteStore(path.join(tmpDir, '.conductor/conductor.db'));
+        const store = new OsmiumSqliteStore(path.join(tmpDir, '.osmium/osmium.db'));
         store.recordCliTurnUsage('codex', { limitHit: false, note: 'Turn 1' });
         const afterSecond = store.recordCliTurnUsage('codex', { limitHit: false, note: 'Turn 2' });
         assert.equal(Number(afterSecond.turns_run), 2);
@@ -198,7 +198,7 @@ export const tests = [
     title: 'Usage tracker records last_limit_hit_at timestamp and note when a CLI emits limitHit: true',
     async fn() {
       await withTempDir(async (tmpDir) => {
-        const store = new ConductorSqliteStore(path.join(tmpDir, '.conductor/conductor.db'));
+        const store = new OsmiumSqliteStore(path.join(tmpDir, '.osmium/osmium.db'));
         const beforeMs = Date.now();
         const usage = store.recordCliTurnUsage('codex', {
           limitHit: true,
@@ -218,7 +218,7 @@ export const tests = [
     title: 'Usage meter reports strictly factual CLI-emitted fields without inventing quota limits or percentages',
     async fn() {
       await withTempDir(async (tmpDir) => {
-        const store = new ConductorSqliteStore(path.join(tmpDir, '.conductor/conductor.db'));
+        const store = new OsmiumSqliteStore(path.join(tmpDir, '.osmium/osmium.db'));
         const usage = store.recordCliTurnUsage('antigravity', { limitHit: false });
         assert.deepEqual(Object.keys(usage).sort(), ['cli_id', 'last_limit_hit_at', 'last_note', 'turns_run']);
         assert.equal('percentageUsed' in usage, false);
@@ -252,7 +252,7 @@ export const tests = [
     title: 'Teamwork task card in SQLite updates assigned_cli and status when reassigned by quota fallback',
     async fn() {
       await withTempDir(async (tmpDir) => {
-        const store = new ConductorSqliteStore(path.join(tmpDir, '.conductor/conductor.db'));
+        const store = new OsmiumSqliteStore(path.join(tmpDir, '.osmium/osmium.db'));
         store.exec(`
           INSERT INTO teamwork_tasks (id, run_id, title, task_type, assigned_cli, status)
           VALUES ('task-q1', 'run-1', 'Markdown brief builder', 'implementation', 'codex', 'running');
@@ -496,15 +496,15 @@ export const tests = [
     title: 'Open editor tabs, active tab, and panel sizes persist in SQLite workspace_layout and restore on restart',
     async fn() {
       await withTempDir(async (tmpDir) => {
-        const dbFile = path.join(tmpDir, '.conductor/conductor.db');
-        const store1 = new ConductorSqliteStore(dbFile);
+        const dbFile = path.join(tmpDir, '.osmium/osmium.db');
+        const store1 = new OsmiumSqliteStore(dbFile);
         store1.saveWorkspaceLayout('proj-api-gateway', {
           layout: { sidebarWidth: 216, agentPanelWidth: 338, terminalHeight: 181 },
           openTabs: ['src/routes/compare.ts', 'src/lib/brief.ts', 'src/routes/auth.ts'],
           activeTab: 'src/routes/compare.ts',
         });
 
-        const store2 = new ConductorSqliteStore(dbFile);
+        const store2 = new OsmiumSqliteStore(dbFile);
         const restored = store2.getWorkspaceLayout('proj-api-gateway');
         assert.equal(restored.activeTab, 'src/routes/compare.ts');
         assert.deepEqual(restored.openTabs, ['src/routes/compare.ts', 'src/lib/brief.ts', 'src/routes/auth.ts']);
@@ -877,9 +877,9 @@ export const tests = [
 
         // Branches & Blame
         const branches = gitExec(repoDir, ['branch', '--list']);
-        assert.ok(branches.includes('conductor/integration'));
+        assert.ok(branches.includes('osmium/integration'));
         const blame = gitExec(repoDir, ['blame', '-L', '1,4', 'src/routes/compare.ts']);
-        assert.ok(blame.includes('Conductor Test'));
+        assert.ok(blame.includes('Osmium Test'));
       });
     },
   },
@@ -998,7 +998,7 @@ export const tests = [
     title: 'Toggling docked right Agent panel (Ctrl/Cmd+L) shares the exact session and conversation with the Session screen',
     async fn() {
       await withTempDir(async (tmpDir) => {
-        const store = new ConductorSqliteStore(path.join(tmpDir, '.conductor/conductor.db'));
+        const store = new OsmiumSqliteStore(path.join(tmpDir, '.osmium/osmium.db'));
         store.createSession({
           id: 'sess-shared-1',
           projectId: 'proj-api',
@@ -1225,7 +1225,7 @@ export const tests = [
   },
 
   // =========================================================================
-  // Feature 23: Adapter SDK & ~/.conductor/extensions/ API (5 tests)
+  // Feature 23: Adapter SDK & ~/.osmium/extensions/ API (5 tests)
   // =========================================================================
   {
     id: 'T1-F23-01',
@@ -1331,7 +1331,7 @@ export const tests = [
     tier: 1,
     feature: 23,
     features: [23],
-    title: 'Extension manifest validator parses ~/.conductor/extensions/<name>/conductor.json with themes, snippets, LSPs, adapters, commands, and panels',
+    title: 'Extension manifest validator parses ~/.osmium/extensions/<name>/osmium.json with themes, snippets, LSPs, adapters, commands, and panels',
     async fn() {
       const manifest = {
         name: 'argon-pack',
@@ -1358,14 +1358,14 @@ export const tests = [
     tier: 1,
     feature: 23,
     features: [23],
-    title: 'Extension installer copies an extension from a local folder into ~/.conductor/extensions/<name>/ and loads its manifest',
+    title: 'Extension installer copies an extension from a local folder into ~/.osmium/extensions/<name>/ and loads its manifest',
     async fn() {
       await withTempDir(async (tmpDir) => {
         const srcExtDir = path.join(tmpDir, 'src-sample-ext');
-        const destExtsRoot = path.join(tmpDir, 'home-conductor/extensions');
+        const destExtsRoot = path.join(tmpDir, 'home-osmium/extensions');
         fs.mkdirSync(srcExtDir, { recursive: true });
         fs.writeFileSync(
-          path.join(srcExtDir, 'conductor.json'),
+          path.join(srcExtDir, 'osmium.json'),
           JSON.stringify({
             name: 'sample-theme-ext',
             version: '0.1.0',
@@ -1381,7 +1381,7 @@ export const tests = [
 
         const installedDir = path.join(destExtsRoot, 'sample-theme-ext');
         fs.cpSync(srcExtDir, installedDir, { recursive: true });
-        const loadedManifest = JSON.parse(fs.readFileSync(path.join(installedDir, 'conductor.json'), 'utf8'));
+        const loadedManifest = JSON.parse(fs.readFileSync(path.join(installedDir, 'osmium.json'), 'utf8'));
         assert.equal(loadedManifest.name, 'sample-theme-ext');
         assert.equal(loadedManifest.contributes.themes[0].id, 'soft-pine');
       });
@@ -1392,7 +1392,7 @@ export const tests = [
     tier: 1,
     feature: 23,
     features: [23],
-    title: 'VS Code importers convert VS Code theme, keybindings, and snippets JSON files into Conductor tokens and registries',
+    title: 'VS Code importers convert VS Code theme, keybindings, and snippets JSON files into Osmium tokens and registries',
     async fn() {
       const vscodeTheme = {
         name: 'VS Code Light+',
@@ -1471,16 +1471,16 @@ export const tests = [
       };
 
       let toggledAgentPanel = false;
-      registerCommand('conductor.palette.open', 'View: Show Command Palette', 'Ctrl+K / Ctrl+Shift+P', () => 'palette-open');
-      registerCommand('conductor.quickOpen', 'File: Quick Open', 'Ctrl+P', (q) => `quick-open:${q}`);
-      registerCommand('conductor.agentPanel.toggle', 'View: Toggle Agent Panel', 'Ctrl+L', () => {
+      registerCommand('osmium.palette.open', 'View: Show Command Palette', 'Ctrl+K / Ctrl+Shift+P', () => 'palette-open');
+      registerCommand('osmium.quickOpen', 'File: Quick Open', 'Ctrl+P', (q) => `quick-open:${q}`);
+      registerCommand('osmium.agentPanel.toggle', 'View: Toggle Agent Panel', 'Ctrl+L', () => {
         toggledAgentPanel = !toggledAgentPanel;
         return toggledAgentPanel;
       });
 
-      assert.equal(await executeCommand('conductor.palette.open'), 'palette-open');
-      assert.equal(await executeCommand('conductor.quickOpen', 'compare.ts'), 'quick-open:compare.ts');
-      assert.equal(await executeCommand('conductor.agentPanel.toggle'), true);
+      assert.equal(await executeCommand('osmium.palette.open'), 'palette-open');
+      assert.equal(await executeCommand('osmium.quickOpen', 'compare.ts'), 'quick-open:compare.ts');
+      assert.equal(await executeCommand('osmium.agentPanel.toggle'), true);
     },
   },
   {
@@ -1491,7 +1491,7 @@ export const tests = [
     title: 'Session Replay timeline steps through persisted SQLite session_events in chronological sequence',
     async fn() {
       await withTempDir(async (tmpDir) => {
-        const store = new ConductorSqliteStore(path.join(tmpDir, '.conductor/conductor.db'));
+        const store = new OsmiumSqliteStore(path.join(tmpDir, '.osmium/osmium.db'));
         store.createSession({ id: 'sess-replay', projectId: 'p1', title: 'Replay test', activeCli: 'codex' });
         store.appendSessionEvent('sess-replay', { type: 'message', role: 'user', text: 'Prompt 1', final: true });
         store.appendSessionEvent('sess-replay', { type: 'file-edit', path: 'compare.ts', added: 43, removed: 0 });
@@ -1544,8 +1544,8 @@ export const tests = [
         checkWorkspaceArtifact(ctx, 'docs/ROADMAP.md');
       }
       const builderConfig = {
-        appId: 'dev.conductor.app',
-        productName: 'Conductor',
+        appId: 'dev.osmium.app',
+        productName: 'Osmium',
         publish: null, // auto-updates off by default per Section 8 Phase 7
         linux: { target: ['AppImage', 'deb'] },
         mac: { target: ['dmg', 'zip'] },

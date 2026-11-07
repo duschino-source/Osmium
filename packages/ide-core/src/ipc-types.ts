@@ -13,7 +13,7 @@ import type {
   StartOptions,
   TeamworkPlan,
   TeamworkRunState,
-} from '@conductor/core';
+} from '@osmium/core';
 
 export interface FileTreeNode {
   name: string;
@@ -173,7 +173,7 @@ export interface WorkspaceLayoutState {
   splitDirection?: 'none' | 'right' | 'down';
 }
 
-export interface ConductorSettings {
+export interface OsmiumSettings {
   theme: 'light' | 'dark';
   fontSize: number;
   formatOnSave: boolean;
@@ -199,7 +199,7 @@ export interface SlashCommandResult {
   undoneCheckpointId?: string;
 }
 
-export interface ConductorBridge {
+export interface OsmiumBridge {
   cli: {
     detectAll(): Promise<Record<CliId, CliDetectionResult & { capabilities: Capabilities }>>;
     detect(id: CliId): Promise<CliDetectionResult>;
@@ -331,8 +331,8 @@ export interface ConductorBridge {
       projectId: string,
       layout: Partial<WorkspaceLayoutState>,
     ): Promise<WorkspaceLayoutState>;
-    getSettings(): Promise<ConductorSettings>;
-    saveSettings(settings: Partial<ConductorSettings>): Promise<ConductorSettings>;
+    getSettings(): Promise<OsmiumSettings>;
+    saveSettings(settings: Partial<OsmiumSettings>): Promise<OsmiumSettings>;
   };
 }
 
@@ -451,6 +451,6 @@ export class CommandRegistry {
 
 declare global {
   interface Window {
-    conductor?: ConductorBridge;
+    osmium?: OsmiumBridge;
   }
 }

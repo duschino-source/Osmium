@@ -1,6 +1,6 @@
-# Conductor: Build Plan for Argon 4
+# OsmiumIDE (Osmium): Build Plan for Argon 4
 
-Working name: Conductor. A desktop IDE and chat app that drives the coding CLIs people already pay for (Codex CLI, Antigravity, DeepSeek CLI and others) from one place, with projects, a primary and secondary CLI per project, and a /teamwork mode that splits work across CLIs.
+Working name: Osmium / OsmiumIDE. A desktop IDE and chat app that drives the coding CLIs people already pay for (Codex CLI, Antigravity, DeepSeek CLI and others) from one place, with projects, a primary and secondary CLI per project, and a /teamwork mode that splits work across CLIs.
 
 ## 0. How to work (read first)
 • Build in the phases of section 8, in order. One phase per session. Stop at the end of each phase and report using the format in section 10.
@@ -21,7 +21,7 @@ One app where a developer connects the coding CLIs they already subscribe to, so
 ## 2. Non-negotiable rules
 1. Official CLIs only, run as child processes. Never read, copy, store or forward a provider's login tokens, cookies or credentials. Each CLI manages its own login. The app only finds out whether a CLI works by running it.
 2. No API key is required anywhere in the app.
-3. Local first: no account, no server, no telemetry unless the user opts in. Project data lives in the repo's .conductor/ folder and a local SQLite database.
+3. Local first: no account, no server, no telemetry unless the user opts in. Project data lives in the repo's .osmium/ folder and a local SQLite database.
 4. Default approval mode is ask. Full-auto only when the user chose it for that project.
 5. The app never writes outside the project root or its own worktrees.
 6. Windows, macOS and Linux are all supported. Test Windows early: ConPTY, path separators, CRLF, long paths.
@@ -37,7 +37,7 @@ One app where a developer connects the coding CLIs they already subscribe to, so
 Layers, bottom to top:
 1. Adapters: one per CLI, all implementing the same interface and emitting the same normalized events.
 2. Session manager: starts, resumes, cancels and records sessions; persists the event log to SQLite.
-3. Checkpoints: before every agent turn, snapshot the working tree as a commit under refs/conductor/checkpoints/, never on the user's branch. Undo restores from it.
+3. Checkpoints: before every agent turn, snapshot the working tree as a commit under refs/osmium/checkpoints/, never on the user's branch. Undo restores from it.
 4. Orchestrator: planner, router, scheduler and worktree manager for /teamwork.
 5. UI: sidebar, chat, editor and diff pane, teamwork board, CLI Hub.
 
@@ -91,7 +91,7 @@ This plan was written without access to the real CLIs, so exact flags and output
 Every adapter must pass the same contract test suite (section 9). Adapters are versioned against the CLI versions they were tested with, and an untested newer version shows a warning, not an error.
 
 ## 6. Project config
-Stored at `.conductor/project.yaml` in each project and editable from the UI:
+Stored at `.osmium/project.yaml` in each project and editable from the UI:
 ```yaml
 version: 1
 name: api-gateway
@@ -109,7 +109,7 @@ fallback:
   onQuotaHit: next-secondary
 teamwork:
   maxParallel: 2
-  integrationBranch: conductor/integration
+  integrationBranch: osmium/integration
 ```
 Validate with zod. Unknown keys are kept, never deleted.
 
@@ -159,7 +159,7 @@ Phase 4: Slash commands
 Phase 5: Teamwork
 • Planner: the primary outputs tasks as structured data (title, scope globs, dependencies, task type). Validate with zod; on invalid output retry once, then show the raw text and let the user fix it.
 • Router: routing rules, manual assignment, or let the primary decide.
-• Worktrees: one git worktree per task under .conductor/worktrees/, all branched from the integration branch. Warn when a task edits files outside its scope.
+• Worktrees: one git worktree per task under .osmium/worktrees/, all branched from the integration branch. Warn when a task edits files outside its scope.
 • Scheduler: respects dependencies and maxParallel; survives an app restart and resumes.
 • Board UI as designed; card detail with the task's chat; reassign; retry with another CLI.
 • Merge: review each task diff, merge into the integration branch, stop on conflicts and offer to assign the conflict to a CLI.
@@ -204,7 +204,7 @@ End every phase with a report:
 You are building the desktop app described in this plan. Work only on Phase 0 in this session. First create docs/PLAN.md from this document and docs/PROGRESS.md. Then scaffold the monorepo, the app shell from the design spec, the mock CLI and the tests. Do not start Phase 1. Do not guess how any real CLI behaves. When Phase 0 is done, stop and send the report in section 10.
 
 ## 13. IDE core (a major part of the product)
-Conductor is an IDE first and an orchestrator second: a developer should be able to leave VS Code for it. This section extends sections 3, 7 and 8. Where they conflict, this section wins. Screens for it are on the design canvas: IDE workspace, and Source control with inline hunk review.
+Osmium is an IDE first and an orchestrator second: a developer should be able to leave VS Code for it. This section extends sections 3, 7 and 8. Where they conflict, this section wins. Screens for it are on the design canvas: IDE workspace, and Source control with inline hunk review.
 
 ### 13.1 Decision: how to build the IDE
 • Build our own workbench on Monaco. Do not fork Code - OSS. Reasons: full design freedom (section 7), a codebase small enough to build and maintain in limited sessions, the orchestration layer is the real differentiator, and contributors can start in days instead of weeks.
@@ -237,7 +237,7 @@ Create packages/ide-core with these services, all in the main process behind typ
 The renderer talks to services only through the command registry and typed IPC. Performance targets: cold start to interactive in under 3 seconds, a 10,000 file folder opens with a lazy tree, typing latency no worse than plain Monaco, search over 100,000 files streams its first results quickly.
 
 ### 13.5 Extension API (small on purpose)
-• Extensions live in ~/.conductor/extensions/<name>/ with a conductor.json manifest that declares what they contribute and the permissions they need.
+• Extensions live in ~/.osmium/extensions/<name>/ with a osmium.json manifest that declares what they contribute and the permissions they need.
 • v1 contribution types: themes, snippets, language servers, CLI adapters, commands, and sandboxed panels (webviews).
 • No arbitrary Node access without a visible permission prompt. Install from a folder or a git URL. There is no marketplace in v1.
 • Importers for VS Code themes, keybindings and snippets. VS Code extensions themselves are not supported in v1.

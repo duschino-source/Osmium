@@ -135,9 +135,9 @@ export const tests = [
     async fn(ctx = {}) {
       resolveWorkspaceFeature(ctx, 1);
       const line221 =
-        'Importers for VS Code themes, keybindings and snippets. VS Cod@[c:\\Users\\stane\\Downloads\\Conductor IDE — CLI hub design(1).html] e extensions themselves are not supported in v1.';
+        'Importers for VS Code themes, keybindings and snippets. VS Cod@[c:\\Users\\stane\\Downloads\\Osmium IDE — CLI hub design(1).html] e extensions themselves are not supported in v1.';
       const line231 =
-        'Make contributing a new CLI adapter the easiest path: the tem@[c:\\Users\\stane\\Downloads\\Conductor IDE — CLI hub design(1).html] plate adapter, the contract test suite and a short guide in docs/adapters/.';
+        'Make contributing a new CLI adapter the easiest path: the tem@[c:\\Users\\stane\\Downloads\\Osmium IDE — CLI hub design(1).html] plate adapter, the contract test suite and a short guide in docs/adapters/.';
 
       const r1 = reconstructClipboardPasteArtifacts(line221);
       assert.equal(r1.originalHadArtifact, true);
@@ -363,17 +363,17 @@ export const tests = [
     tier: 2,
     feature: 3,
     features: [3],
-    title: 'Rejects absolute paths outside project root while allowing project and ~/.conductor paths',
+    title: 'Rejects absolute paths outside project root while allowing project and ~/.osmium paths',
     async fn(ctx = {}) {
       resolveWorkspaceFeature(ctx, 3);
       await withTempDir(async (baseDir) => {
         const projectRoot = path.join(baseDir, 'project');
-        const globalConductor = path.join(baseDir, 'home-conductor');
+        const globalOsmium = path.join(baseDir, 'home-osmium');
         const outsidePath = path.join(baseDir, 'outside-secret.txt');
         fs.mkdirSync(projectRoot, { recursive: true });
-        fs.mkdirSync(globalConductor, { recursive: true });
+        fs.mkdirSync(globalOsmium, { recursive: true });
 
-        const guard = new WorkspaceBoundaryGuard(projectRoot, { globalConductorDir: globalConductor });
+        const guard = new WorkspaceBoundaryGuard(projectRoot, { globalOsmiumDir: globalOsmium });
         assert.throws(
           () => guard.safeWriteFileSync(outsidePath, 'hacked'),
           (err) => err.code === 'ERR_WORKSPACE_BOUNDARY_VIOLATION'
@@ -383,7 +383,7 @@ export const tests = [
         const validInside = guard.safeWriteFileSync('src/ok.ts', 'export const ok = 1;');
         assert.equal(fs.existsSync(validInside), true);
 
-        const validGlobal = guard.safeWriteFileSync(path.join(globalConductor, 'extensions/ext/conductor.json'), '{}');
+        const validGlobal = guard.safeWriteFileSync(path.join(globalOsmium, 'extensions/ext/osmium.json'), '{}');
         assert.equal(fs.existsSync(validGlobal), true);
       });
     },
@@ -419,12 +419,12 @@ export const tests = [
     tier: 2,
     feature: 3,
     features: [3],
-    title: 'Blocks task agent in .conductor/worktrees/task-a from writing to sibling worktree task-b',
+    title: 'Blocks task agent in .osmium/worktrees/task-a from writing to sibling worktree task-b',
     async fn(ctx = {}) {
       resolveWorkspaceFeature(ctx, 3);
       await withTempDir(async (projectRoot) => {
-        const worktreeA = path.join(projectRoot, '.conductor', 'worktrees', 'task-a');
-        const worktreeB = path.join(projectRoot, '.conductor', 'worktrees', 'task-b');
+        const worktreeA = path.join(projectRoot, '.osmium', 'worktrees', 'task-a');
+        const worktreeB = path.join(projectRoot, '.osmium', 'worktrees', 'task-b');
         fs.mkdirSync(worktreeA, { recursive: true });
         fs.mkdirSync(worktreeB, { recursive: true });
 
@@ -476,7 +476,7 @@ export const tests = [
     title: 'Non-existent CLI binary returns { installed: false } cleanly without throwing',
     async fn(ctx = {}) {
       resolveWorkspaceFeature(ctx, 4);
-      const res = await probeCliExecutable('/tmp/non-existent-conductor-cli-bin-99999');
+      const res = await probeCliExecutable('/tmp/non-existent-osmium-cli-bin-99999');
       assert.deepEqual(res, { installed: false });
     },
   },
@@ -880,7 +880,7 @@ export const tests = [
     async fn(ctx = {}) {
       resolveWorkspaceFeature(ctx, 7);
       await withTempDir(async (tmpDir) => {
-        const store = new SqliteSessionStore(path.join(tmpDir, '.conductor', 'conductor.db'));
+        const store = new SqliteSessionStore(path.join(tmpDir, '.osmium', 'osmium.db'));
         store.createSession({ id: 'sess-1', projectId: 'proj-1', title: 'Auth refactor', activeCli: 'codex' });
         store.appendEvent('sess-1', { type: 'message', role: 'user', text: 'Refactor login', final: true });
         store.appendEvent('sess-1', { type: 'message', role: 'assistant', text: 'Partial stream...', final: false });
@@ -905,7 +905,7 @@ export const tests = [
     async fn(ctx = {}) {
       resolveWorkspaceFeature(ctx, 7);
       await withTempDir(async (tmpDir) => {
-        const store = new SqliteSessionStore(path.join(tmpDir, '.conductor', 'conductor.db'));
+        const store = new SqliteSessionStore(path.join(tmpDir, '.osmium', 'osmium.db'));
         store.createSession({ id: 'sess-close', projectId: 'proj-1', title: 'Close test', activeCli: 'codex' });
 
         const firstClose = store.closeSession('sess-close');
@@ -927,7 +927,7 @@ export const tests = [
     async fn(ctx = {}) {
       resolveWorkspaceFeature(ctx, 7);
       await withTempDir(async (tmpDir) => {
-        const store = new SqliteSessionStore(path.join(tmpDir, '.conductor', 'conductor.db'));
+        const store = new SqliteSessionStore(path.join(tmpDir, '.osmium', 'osmium.db'));
         store.createSession({ id: 'sess-seq', projectId: 'proj-1', title: 'Burst write', activeCli: 'codex' });
 
         for (let i = 1; i <= 20; i++) {
@@ -952,7 +952,7 @@ export const tests = [
     async fn(ctx = {}) {
       resolveWorkspaceFeature(ctx, 7);
       await withTempDir(async (tmpDir) => {
-        const store = new SqliteSessionStore(path.join(tmpDir, '.conductor', 'conductor.db'));
+        const store = new SqliteSessionStore(path.join(tmpDir, '.osmium', 'osmium.db'));
         assert.throws(
           () => store.getSession('non-existent-session-id'),
           (err) => err.code === 'ERR_SESSION_NOT_FOUND'
@@ -973,7 +973,7 @@ export const tests = [
     async fn(ctx = {}) {
       resolveWorkspaceFeature(ctx, 7);
       await withTempDir(async (tmpDir) => {
-        const dbPath = path.join(tmpDir, '.conductor', 'conductor.db');
+        const dbPath = path.join(tmpDir, '.osmium', 'osmium.db');
         const store = new SqliteSessionStore(dbPath);
         store.createSession({ id: 's-working', projectId: 'p1', title: 'Working', activeCli: 'codex', status: 'working' });
         store.createSession({ id: 's-waiting', projectId: 'p1', title: 'Waiting', activeCli: 'antigravity', status: 'waiting' });
@@ -1131,7 +1131,7 @@ export const tests = [
   },
 
   /* ==========================================================================
-   * FEATURE 9: .conductor/project.yaml Config (5 Tests)
+   * FEATURE 9: .osmium/project.yaml Config (5 Tests)
    * ========================================================================== */
   {
     id: 'T2-F09-01',
@@ -1150,7 +1150,7 @@ export const tests = [
         customExperimentalFlag: 'alpha-9',
         routing: [{ when: 'planning', cli: 'codex', customRoutePriority: 100 }],
         fallback: { onQuotaHit: 'next-secondary', customNotifyWebhook: 'http://localhost' },
-        teamwork: { maxParallel: 2, integrationBranch: 'conductor/integration', customWorktreePrefix: 'wt-' },
+        teamwork: { maxParallel: 2, integrationBranch: 'osmium/integration', customWorktreePrefix: 'wt-' },
       };
 
       const validated = validateProjectConfig(raw);
@@ -1208,7 +1208,7 @@ export const tests = [
     tier: 2,
     feature: 9,
     features: [9],
-    title: 'Initializes default .conductor/project.yaml when missing in project directory',
+    title: 'Initializes default .osmium/project.yaml when missing in project directory',
     async fn(ctx = {}) {
       resolveWorkspaceFeature(ctx, 9);
       await withTempDir(async (tmpDir) => {
@@ -1230,9 +1230,9 @@ export const tests = [
     async fn(ctx = {}) {
       resolveWorkspaceFeature(ctx, 9);
       await withTempDir(async (tmpDir) => {
-        const conductorDir = path.join(tmpDir, '.conductor');
-        fs.mkdirSync(conductorDir, { recursive: true });
-        const yamlPath = path.join(conductorDir, 'project.yaml');
+        const osmiumDir = path.join(tmpDir, '.osmium');
+        fs.mkdirSync(osmiumDir, { recursive: true });
+        const yamlPath = path.join(osmiumDir, 'project.yaml');
         const corruptedContent = 'routing: [[unclosed\n  : : invalid syntax';
         fs.writeFileSync(yamlPath, corruptedContent, 'utf8');
 
@@ -1652,11 +1652,11 @@ export const tests = [
     async fn(ctx = {}) {
       resolveWorkspaceFeature(ctx, 12);
       await withTempGitRepo(async (repoDir) => {
-        const refs = runGit(repoDir, ['for-each-ref', 'refs/conductor/checkpoints/']).stdout;
+        const refs = runGit(repoDir, ['for-each-ref', 'refs/osmium/checkpoints/']).stdout;
         assert.equal(refs, '');
 
         function executeSlashUndo(cwd) {
-          const list = runGit(cwd, ['for-each-ref', '--format=%(refname)', 'refs/conductor/checkpoints/']).stdout;
+          const list = runGit(cwd, ['for-each-ref', '--format=%(refname)', 'refs/osmium/checkpoints/']).stdout;
           if (!list) {
             return { ok: false, noOp: true, message: 'No checkpoints available to undo in this session.' };
           }

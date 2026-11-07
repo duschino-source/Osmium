@@ -9,8 +9,8 @@ import {
   assertWorkspaceWriteAllowed,
 } from '../index.js';
 
-describe('@conductor/core schemas & boundary guards', () => {
-  it('validates a canonical .conductor/project.yaml configuration', () => {
+describe('@osmium/core schemas & boundary guards', () => {
+  it('validates a canonical .osmium/project.yaml configuration', () => {
     const sampleYaml = `
 version: 1
 name: api-gateway
@@ -28,7 +28,7 @@ fallback:
   onQuotaHit: next-secondary
 teamwork:
   maxParallel: 2
-  integrationBranch: conductor/integration
+  integrationBranch: osmium/integration
 `;
     const parsed = parseProjectConfigYaml(sampleYaml);
     expect(parsed.version).toBe(1);
@@ -39,7 +39,7 @@ teamwork:
     expect(parsed.routing).toHaveLength(3);
     expect(parsed.fallback.onQuotaHit).toBe('next-secondary');
     expect(parsed.teamwork.maxParallel).toBe(2);
-    expect(parsed.teamwork.integrationBranch).toBe('conductor/integration');
+    expect(parsed.teamwork.integrationBranch).toBe('osmium/integration');
   });
 
   it('preserves unknown YAML keys at root and nested object levels on parse and stringify', () => {
@@ -59,7 +59,7 @@ fallback:
   notifySlack: false
 teamwork:
   maxParallel: 3
-  integrationBranch: conductor/integration
+  integrationBranch: osmium/integration
   customWorktreePrefix: task-wt
 `;
     const parsed = parseProjectConfigYaml(yamlWithUnknowns) as Record<string, any>;
@@ -139,9 +139,9 @@ teamwork:
   });
 
   it('enforces workspace write boundary rules (Section 2.5)', () => {
-    const root = '/tmp/conductor-project';
+    const root = '/tmp/osmium-project';
     expect(isPathInsideWorkspace(root, 'src/index.ts')).toBe(true);
-    expect(isPathInsideWorkspace(root, '.conductor/worktrees/task-1/file.ts')).toBe(true);
+    expect(isPathInsideWorkspace(root, '.osmium/worktrees/task-1/file.ts')).toBe(true);
     expect(isPathInsideWorkspace(root, '../outside.txt')).toBe(false);
     expect(isPathInsideWorkspace(root, '/etc/passwd')).toBe(false);
 

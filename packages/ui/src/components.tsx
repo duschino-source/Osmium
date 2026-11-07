@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import type { ApprovalMode, CliId } from '@conductor/core';
-import { getCliColor, getCliDisplayName } from '@conductor/adapters';
+import type { ApprovalMode, CliId } from '@osmium/core';
+import { getCliColor, getCliDisplayName } from '@osmium/adapters';
 
 export interface CliBadgeProps {
   cliId: CliId;
@@ -57,16 +57,11 @@ export const CliBadge: React.FC<CliBadgeProps> = ({
         type="button"
         onClick={onClick}
         style={badgeStyle}
-        className={`conductor-cli-badge ${className}`.trim()}
+        className={`osmium-cli-badge ${className}`.trim()}
         data-testid={testId ?? `cli-badge-${cliId}`}
       >
-        <span
-          aria-hidden="true"
-          className="conductor-cli-dot"
-          data-cli-id={cliId}
-          style={dotStyle}
-        />
-        <span className="conductor-cli-name">{fullLabel}</span>
+        <span aria-hidden="true" className="osmium-cli-dot" data-cli-id={cliId} style={dotStyle} />
+        <span className="osmium-cli-name">{fullLabel}</span>
       </button>
     );
   }
@@ -74,11 +69,11 @@ export const CliBadge: React.FC<CliBadgeProps> = ({
   return (
     <span
       style={badgeStyle}
-      className={`conductor-cli-badge ${className}`.trim()}
+      className={`osmium-cli-badge ${className}`.trim()}
       data-testid={testId ?? `cli-badge-${cliId}`}
     >
-      <span aria-hidden="true" className="conductor-cli-dot" data-cli-id={cliId} style={dotStyle} />
-      <span className="conductor-cli-name">{fullLabel}</span>
+      <span aria-hidden="true" className="osmium-cli-dot" data-cli-id={cliId} style={dotStyle} />
+      <span className="osmium-cli-name">{fullLabel}</span>
     </span>
   );
 };
@@ -134,7 +129,7 @@ export const Button: React.FC<ButtonProps> = ({
     <button
       type="button"
       style={baseStyle}
-      className={`conductor-btn conductor-btn-${variant} ${className}`.trim()}
+      className={`osmium-btn osmium-btn-${variant} ${className}`.trim()}
       {...rest}
     >
       {children}
@@ -162,7 +157,7 @@ export const Card: React.FC<CardProps> = ({
         padding,
         ...style,
       }}
-      className={`conductor-card ${className}`.trim()}
+      className={`osmium-card ${className}`.trim()}
       {...rest}
     >
       {children}
@@ -377,7 +372,7 @@ export const Composer: React.FC<ComposerProps> = ({
 
   return (
     <div
-      className="conductor-composer-wrapper"
+      className="osmium-composer-wrapper"
       style={{
         display: 'flex',
         flexDirection: 'column',
@@ -390,7 +385,7 @@ export const Composer: React.FC<ComposerProps> = ({
       )}
       <div
         data-testid="composer-box"
-        className="conductor-composer"
+        className="osmium-composer"
         style={{
           backgroundColor: 'var(--bg-surface)',
           border: '1px solid var(--border-default)',

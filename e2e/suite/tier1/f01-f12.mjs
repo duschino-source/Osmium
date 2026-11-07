@@ -15,7 +15,7 @@ import {
   spawnCliProcess,
   WorkspaceWriteBoundaryGuard,
   CliProberAndRegistry,
-  ConductorSqliteStore,
+  OsmiumSqliteStore,
   createGitCheckpoint,
   getCheckpointDiff,
   undoGitCheckpoint,
@@ -271,7 +271,7 @@ export const tests = [
         fs.writeFileSync(
           sampleRendererFile,
           `export async function startChat(prompt: string) {
-             return window.conductor.session.start({ cwd: '/repo', approvalMode: 'ask' });
+             return window.osmium.session.start({ cwd: '/repo', approvalMode: 'ask' });
            }`,
           'utf8'
         );
@@ -318,13 +318,13 @@ export const tests = [
     tier: 1,
     feature: 3,
     features: [3],
-    title: 'Workspace write boundary guard allows writes inside .conductor/worktrees/<task-id>',
+    title: 'Workspace write boundary guard allows writes inside .osmium/worktrees/<task-id>',
     async fn() {
       await withTempGitRepo(async (repoDir) => {
         const guard = new WorkspaceWriteBoundaryGuard({ projectRoot: repoDir });
-        const wtFile = '.conductor/worktrees/task-1/src/feature.ts';
+        const wtFile = '.osmium/worktrees/task-1/src/feature.ts';
         const writtenPath = guard.writeFile(wtFile, 'export const wt = 1;\n');
-        assert.ok(writtenPath.includes(path.join('.conductor', 'worktrees', 'task-1')));
+        assert.ok(writtenPath.includes(path.join('.osmium', 'worktrees', 'task-1')));
         assert.equal(fs.readFileSync(writtenPath, 'utf8'), 'export const wt = 1;\n');
       });
     },
@@ -334,17 +334,17 @@ export const tests = [
     tier: 1,
     feature: 3,
     features: [3],
-    title: 'Workspace write boundary guard allows writes inside ~/.conductor/extensions/<name>',
+    title: 'Workspace write boundary guard allows writes inside ~/.osmium/extensions/<name>',
     async fn() {
       await withTempDir(async (tmpDir) => {
         const projectRoot = path.join(tmpDir, 'project');
-        const homeConductor = path.join(tmpDir, 'home-conductor');
+        const homeOsmium = path.join(tmpDir, 'home-osmium');
         fs.mkdirSync(projectRoot, { recursive: true });
         const guard = new WorkspaceWriteBoundaryGuard({
           projectRoot,
-          homeConductorDir: homeConductor,
+          homeOsmiumDir: homeOsmium,
         });
-        const extManifest = path.join(homeConductor, 'extensions/forest-theme/conductor.json');
+        const extManifest = path.join(homeOsmium, 'extensions/forest-theme/osmium.json');
         const written = guard.writeFile(extManifest, JSON.stringify({ name: 'forest-theme', version: '1.0.0' }));
         assert.equal(written, extManifest);
         assert.equal(JSON.parse(fs.readFileSync(written, 'utf8')).name, 'forest-theme');
@@ -736,12 +736,12 @@ export const tests = [
     tier: 1,
     feature: 7,
     features: [7],
-    title: 'SQLite storage initializes all 8 required tables in .conductor/conductor.db',
+    title: 'SQLite storage initializes all 8 required tables in .osmium/osmium.db',
     async fn(ctx = {}) {
       checkWorkspaceArtifact(ctx, 'packages/core');
       await withTempDir(async (tmpDir) => {
-        const dbPath = path.join(tmpDir, '.conductor/conductor.db');
-        const store = new ConductorSqliteStore(dbPath);
+        const dbPath = path.join(tmpDir, '.osmium/osmium.db');
+        const store = new OsmiumSqliteStore(dbPath);
         const tables = store
           .query(`SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;`)
           .map((r) => r.name);
@@ -768,7 +768,7 @@ export const tests = [
     title: 'Starting a session persists a session record in SQLite with project_id, title, active_cli, and status',
     async fn() {
       await withTempDir(async (tmpDir) => {
-        const store = new ConductorSqliteStore(path.join(tmpDir, '.conductor/conductor.db'));
+        const store = new OsmiumSqliteStore(path.join(tmpDir, '.osmium/osmium.db'));
         const created = store.createSession({
           id: 'sess-001',
           projectId: 'proj-api-gateway',
@@ -791,7 +791,7 @@ export const tests = [
     title: 'Session manager appends ordered AgentEvent sequence (seq 1..N) into session_events table',
     async fn() {
       await withTempDir(async (tmpDir) => {
-        const store = new ConductorSqliteStore(path.join(tmpDir, '.conductor/conductor.db'));
+        const store = new OsmiumSqliteStore(path.join(tmpDir, '.osmium/osmium.db'));
         store.createSession({
           id: 'sess-002',
           projectId: 'proj-1',
@@ -832,7 +832,7 @@ export const tests = [
     title: 'Cancelling an active session transitions persisted session status to cancelled/idle in SQLite',
     async fn() {
       await withTempDir(async (tmpDir) => {
-        const store = new ConductorSqliteStore(path.join(tmpDir, '.conductor/conductor.db'));
+        const store = new OsmiumSqliteStore(path.join(tmpDir, '.osmium/osmium.db'));
         store.createSession({
           id: 'sess-cancel',
           projectId: 'proj-1',
@@ -854,8 +854,8 @@ export const tests = [
     title: 'Session history and event log survive simulated app restart by reloading from the SQLite database file',
     async fn() {
       await withTempDir(async (tmpDir) => {
-        const dbFile = path.join(tmpDir, '.conductor/conductor.db');
-        const storeBefore = new ConductorSqliteStore(dbFile);
+        const dbFile = path.join(tmpDir, '.osmium/osmium.db');
+        const storeBefore = new OsmiumSqliteStore(dbFile);
         storeBefore.createSession({
           id: 'sess-restart',
           projectId: 'proj-1',
@@ -871,7 +871,7 @@ export const tests = [
         });
 
         // Simulate app restart with a fresh store instance pointing at the same SQLite file
-        const storeAfter = new ConductorSqliteStore(dbFile);
+        const storeAfter = new OsmiumSqliteStore(dbFile);
         const reloadedSession = storeAfter.getSession('sess-restart');
         const reloadedEvents = storeAfter.getSessionEvents('sess-restart');
         assert.equal(reloadedSession.title, 'Survive restart');
@@ -889,11 +889,11 @@ export const tests = [
     tier: 1,
     feature: 8,
     features: [8],
-    title: 'createGitCheckpoint stores a commit under refs/conductor/checkpoints/<id> capturing the working tree',
+    title: 'createGitCheckpoint stores a commit under refs/osmium/checkpoints/<id> capturing the working tree',
     async fn() {
       await withTempGitRepo(async (repoDir) => {
         const cp = createGitCheckpoint(repoDir, 'turn-001');
-        assert.equal(cp.refName, 'refs/conductor/checkpoints/turn-001');
+        assert.equal(cp.refName, 'refs/osmium/checkpoints/turn-001');
         assert.match(cp.commitSha, /^[0-9a-f]{40}$/);
         const resolvedSha = gitExec(repoDir, ['rev-parse', cp.refName]);
         assert.equal(resolvedSha, cp.commitSha);
@@ -1006,14 +1006,14 @@ export const tests = [
   },
 
   // =========================================================================
-  // Feature 09: .conductor/project.yaml Config (5 tests)
+  // Feature 09: .osmium/project.yaml Config (5 tests)
   // =========================================================================
   {
     id: 'T1-F09-01',
     tier: 1,
     feature: 9,
     features: [9],
-    title: 'Parses valid Section 6 .conductor/project.yaml with primary, secondary, approvalMode, routing, fallback, and teamwork',
+    title: 'Parses valid Section 6 .osmium/project.yaml with primary, secondary, approvalMode, routing, fallback, and teamwork',
     async fn() {
       const yamlSample = [
         'version: 1',
@@ -1032,7 +1032,7 @@ export const tests = [
         '  onQuotaHit: next-secondary',
         'teamwork:',
         '  maxParallel: 2',
-        '  integrationBranch: conductor/integration',
+        '  integrationBranch: osmium/integration',
       ].join('\n');
 
       const parsed = validateAndNormalizeProjectConfig(parseSimpleProjectYaml(yamlSample));
@@ -1044,7 +1044,7 @@ export const tests = [
       assert.equal(parsed.routing.length, 3);
       assert.equal(parsed.fallback.onQuotaHit, 'next-secondary');
       assert.equal(parsed.teamwork.maxParallel, 2);
-      assert.equal(parsed.teamwork.integrationBranch, 'conductor/integration');
+      assert.equal(parsed.teamwork.integrationBranch, 'osmium/integration');
     },
   },
   {
@@ -1052,7 +1052,7 @@ export const tests = [
     tier: 1,
     feature: 9,
     features: [9],
-    title: 'Applies schema defaults when optional keys are omitted from .conductor/project.yaml',
+    title: 'Applies schema defaults when optional keys are omitted from .osmium/project.yaml',
     async fn() {
       const minimal = validateAndNormalizeProjectConfig(parseSimpleProjectYaml('name: landing-site\n'));
       assert.equal(minimal.version, 1);
@@ -1062,7 +1062,7 @@ export const tests = [
       assert.equal(minimal.approvalMode, 'ask');
       assert.equal(minimal.fallback.onQuotaHit, 'next-secondary');
       assert.equal(minimal.teamwork.maxParallel, 2);
-      assert.equal(minimal.teamwork.integrationBranch, 'conductor/integration');
+      assert.equal(minimal.teamwork.integrationBranch, 'osmium/integration');
     },
   },
   {
@@ -1073,7 +1073,7 @@ export const tests = [
     title: 'Round-trip saveProjectConfigFile and loadProjectConfigFile preserves all settings and unknown custom keys',
     async fn() {
       await withTempGitRepo(async (repoDir) => {
-        const cfgDir = path.join(repoDir, '.conductor');
+        const cfgDir = path.join(repoDir, '.osmium');
         fs.mkdirSync(cfgDir, { recursive: true });
         fs.writeFileSync(
           path.join(cfgDir, 'project.yaml'),
@@ -1093,7 +1093,7 @@ export const tests = [
     tier: 1,
     feature: 9,
     features: [9],
-    title: 'Routing rules in .conductor/project.yaml map planning -> codex, browser-check -> antigravity, tests -> deepseek',
+    title: 'Routing rules in .osmium/project.yaml map planning -> codex, browser-check -> antigravity, tests -> deepseek',
     async fn() {
       await withTempGitRepo(async (repoDir) => {
         saveProjectConfigFile(repoDir, {
@@ -1118,7 +1118,7 @@ export const tests = [
     tier: 1,
     feature: 9,
     features: [9],
-    title: 'Updating primary and secondary CLI pickers persists to .conductor/project.yaml',
+    title: 'Updating primary and secondary CLI pickers persists to .osmium/project.yaml',
     async fn() {
       await withTempGitRepo(async (repoDir) => {
         saveProjectConfigFile(repoDir, {
@@ -1144,7 +1144,7 @@ export const tests = [
     title: 'Switching CLI mid-session updates the active_cli column of the session in SQLite',
     async fn() {
       await withTempDir(async (tmpDir) => {
-        const store = new ConductorSqliteStore(path.join(tmpDir, '.conductor/conductor.db'));
+        const store = new OsmiumSqliteStore(path.join(tmpDir, '.osmium/osmium.db'));
         store.createSession({
           id: 'sess-handoff-1',
           projectId: 'proj-1',
@@ -1164,7 +1164,7 @@ export const tests = [
     title: 'buildHandoffSystemContext synthesizes user prompts, assistant summary, edited files, and tools from SQLite event log',
     async fn() {
       await withTempDir(async (tmpDir) => {
-        const store = new ConductorSqliteStore(path.join(tmpDir, '.conductor/conductor.db'));
+        const store = new OsmiumSqliteStore(path.join(tmpDir, '.osmium/osmium.db'));
         store.createSession({
           id: 'sess-handoff-2',
           projectId: 'proj-1',
@@ -1190,7 +1190,7 @@ export const tests = [
           removed: 0,
         });
         const summary = buildHandoffSystemContext(store, 'sess-handoff-2', 'codex', 'antigravity');
-        assert.ok(summary.includes('[Conductor Mid-Session Handoff: codex -> antigravity]'));
+        assert.ok(summary.includes('[Osmium Mid-Session Handoff: codex -> antigravity]'));
         assert.ok(summary.includes('Add a Copy review brief action to the compare view.'));
         assert.ok(summary.includes('compare-model.ts (+43 -0)'));
       });
@@ -1204,7 +1204,7 @@ export const tests = [
     title: 'Target CLI session receives synthesized systemContext in StartOptions on mid-session switch',
     async fn() {
       await withTempDir(async (tmpDir) => {
-        const store = new ConductorSqliteStore(path.join(tmpDir, '.conductor/conductor.db'));
+        const store = new OsmiumSqliteStore(path.join(tmpDir, '.osmium/osmium.db'));
         store.createSession({ id: 'sess-h3', projectId: 'p1', title: 'Handoff', activeCli: 'codex' });
         store.appendSessionEvent('sess-h3', {
           type: 'message',
@@ -1230,7 +1230,7 @@ export const tests = [
     title: 'Chat handoff line records CLI badge, color dot, activity summary, and duration (● Antigravity ran the browser check on fixtures · 41s)',
     async fn() {
       await withTempDir(async (tmpDir) => {
-        const store = new ConductorSqliteStore(path.join(tmpDir, '.conductor/conductor.db'));
+        const store = new OsmiumSqliteStore(path.join(tmpDir, '.osmium/osmium.db'));
         store.createSession({ id: 'sess-h4', projectId: 'p1', title: 'Handoff UI', activeCli: 'antigravity' });
         const handoffEvent = {
           type: 'tool',
@@ -1258,7 +1258,7 @@ export const tests = [
     title: 'Chaining multiple mid-session CLI switches (codex -> antigravity -> deepseek) preserves cumulative context',
     async fn() {
       await withTempDir(async (tmpDir) => {
-        const store = new ConductorSqliteStore(path.join(tmpDir, '.conductor/conductor.db'));
+        const store = new OsmiumSqliteStore(path.join(tmpDir, '.osmium/osmium.db'));
         store.createSession({ id: 'sess-h5', projectId: 'p1', title: 'Chain handoff', activeCli: 'codex' });
         store.appendSessionEvent('sess-h5', {
           type: 'file-edit',
@@ -1454,7 +1454,7 @@ export const tests = [
     title: '/cli <name> slash command switches the active CLI of the session and records the switch event',
     async fn() {
       await withTempDir(async (tmpDir) => {
-        const store = new ConductorSqliteStore(path.join(tmpDir, '.conductor/conductor.db'));
+        const store = new OsmiumSqliteStore(path.join(tmpDir, '.osmium/osmium.db'));
         store.createSession({ id: 'sess-slash-cli', projectId: 'p1', title: 'Slash CLI', activeCli: 'codex' });
         const cmd = '/cli antigravity';
         const targetCli = cmd.slice('/cli '.length).trim();

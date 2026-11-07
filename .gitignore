@@ -2,7 +2,7 @@
 node_modules/
 dist/
 out/
-.conductor/
+.osmium/
 coverage/
 test-results/
 playwright-report/
@@ -31,3 +31,7 @@ playwright-report/
 # User uploads (reference screenshots are copied to docs/design/)
 upload/
 /*.png
+
+# System home config & clone staging
+.gitconfig
+duschino-source/

@@ -1,5 +1,5 @@
 {
-  "name": "@conductor/ide-core",
+  "name": "@osmium/ide-core",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -16,7 +16,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@conductor/core": "workspace:*",
+    "@osmium/core": "workspace:*",
     "chokidar": "^4.0.3",
     "node-pty": "^1.1.0",
     "picomatch": "^4.0.2"

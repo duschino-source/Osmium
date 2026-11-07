@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import type { ApprovalMode, CliId } from '@conductor/core';
-import { getCliColor } from '@conductor/adapters';
-import { Button, CliBadge, Composer } from '@conductor/ui';
+import type { ApprovalMode, CliId } from '@osmium/core';
+import { getCliColor } from '@osmium/adapters';
+import { Button, CliBadge, Composer } from '@osmium/ui';
 
 export interface SidebarProjectItem {
   id: string;
@@ -182,7 +182,7 @@ export const App: React.FC = () => {
                 >
                   <span
                     aria-hidden="true"
-                    className="conductor-project-dot"
+                    className="osmium-project-dot"
                     style={{
                       width: '8px',
                       height: '8px',

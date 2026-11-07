@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import readline from 'node:readline';
 import { fileURLToPath } from 'node:url';
-import { type AgentEvent, type TeamworkPlan, assertWorkspaceWriteAllowed } from '@conductor/core';
+import { type AgentEvent, type TeamworkPlan, assertWorkspaceWriteAllowed } from '@osmium/core';
 
 export const MOCK_CLI_VERSION = '0.1.0';
 
@@ -203,7 +203,7 @@ function inferScenarioFromPrompt(prompt: string): MockScenarioName {
 
 export function getMockCliHelpText(): string {
   return [
-    `mock-cli v${MOCK_CLI_VERSION} — Conductor deterministic fake CLI for testing`,
+    `mock-cli v${MOCK_CLI_VERSION} — Osmium deterministic fake CLI for testing`,
     '',
     'Usage: mock-cli [options]',
     '',
