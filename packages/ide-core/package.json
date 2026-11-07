@@ -1,0 +1,24 @@
+{
+  "name": "@conductor/ide-core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@conductor/core": "workspace:*",
+    "chokidar": "^4.0.3",
+    "node-pty": "^1.1.0",
+    "picomatch": "^4.0.2"
+  }
+}
