@@ -1,0 +1,33 @@
+# Dependencies & Build Outputs
+node_modules/
+dist/
+out/
+.conductor/
+coverage/
+test-results/
+playwright-report/
+*.tsbuildinfo
+.DS_Store
+
+# Orchestrator / Agent Workspace State
+.agents/
+.gemini
+
+# Host Home Directory Dotfiles & Caches (since repo root is /home/antigravity)
+.cache/
+.local/
+.npm/
+.config/
+.pki/
+.bash_logout
+.bashrc
+.bash_history
+.profile
+.Xauthority
+.lesshst
+.viminfo
+.wget-hsts
+
+# User uploads (reference screenshots are copied to docs/design/)
+upload/
+/*.png
