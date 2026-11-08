@@ -11,6 +11,7 @@ playwright-report/
 .DS_Store
 
 # Local agent/debug artifacts (not product source)
+.perch/
 electron_debug.log
 capture_screen_launcher.ps1
 daemon_run.ps1
