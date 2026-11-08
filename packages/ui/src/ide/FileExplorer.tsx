@@ -16,6 +16,9 @@ export interface FileExplorerProps {
   activeFilePath?: string;
   onSelectFile: (node: FileNode) => void;
   onCreateEntry?: (targetPath: string, kind: 'file' | 'directory') => Promise<void>;
+  onRenameEntry?: (oldPath: string, newPath: string) => Promise<void>;
+  onDeleteEntry?: (targetPath: string) => Promise<void>;
+  onOpenFolder?: () => void;
   onRefresh?: () => void;
 }
 
@@ -46,6 +49,9 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
   activeFilePath,
   onSelectFile,
   onCreateEntry,
+  onRenameEntry,
+  onDeleteEntry,
+  onOpenFolder,
   onRefresh,
 }) => {
   const [expandedDirs, setExpandedDirs] = useState<Set<string>>(
@@ -54,6 +60,9 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
   const [creatingKind, setCreatingKind] = useState<'file' | 'directory' | null>(null);
   const [newEntryName, setNewEntryName] = useState<string>('');
   const [selectedDir, setSelectedDir] = useState<string>('');
+  const [renamingPath, setRenamingPath] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState<string>('');
+  const [pendingDelete, setPendingDelete] = useState<FileNode | null>(null);
 
   const toggleDir = (relPath: string) => {
     setExpandedDirs((prev) => {
@@ -77,44 +86,130 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
     onRefresh?.();
   };
 
+  const startRename = (node: FileNode) => {
+    setRenamingPath(node.absPath || node.relPath);
+    setRenameValue(node.name);
+  };
+
+  const commitRename = async (node: FileNode) => {
+    const trimmed = renameValue.trim();
+    setRenamingPath(null);
+    if (!trimmed || trimmed === node.name || !onRenameEntry) return;
+    // Rename in place: keep the node's directory, swap the leaf name.
+    const source = node.absPath || node.relPath;
+    const separator = source.includes('\\') ? '\\' : '/';
+    const parent = source.slice(0, source.lastIndexOf(separator));
+    const target = parent ? `${parent}${separator}${trimmed}` : trimmed;
+    await onRenameEntry(source, target);
+    onRefresh?.();
+  };
+
+  const confirmDelete = async () => {
+    const node = pendingDelete;
+    setPendingDelete(null);
+    if (!node || !onDeleteEntry) return;
+    await onDeleteEntry(node.absPath || node.relPath);
+    onRefresh?.();
+  };
+
   const renderNode = (node: FileNode, depth: number = 0) => {
     const isDir = node.kind === 'directory';
     const isExpanded = expandedDirs.has(node.relPath);
     const isActive = activeFilePath === node.absPath || activeFilePath === node.relPath;
+    const nodeKey = node.absPath || node.relPath;
+    const isRenaming = renamingPath === nodeKey;
+
+    if (isRenaming) {
+      return (
+        <div key={nodeKey}>
+          <form
+            className="wb-row"
+            data-testid={`explorer-rename-form-${node.name}`}
+            style={{ paddingLeft: `${12 + depth * 14}px` }}
+            onSubmit={(e) => {
+              e.preventDefault();
+              void commitRename(node);
+            }}
+          >
+            <input
+              type="text"
+              className="wb-field"
+              data-testid="explorer-rename-input"
+              aria-label={`Rename ${node.name}`}
+              value={renameValue}
+              onChange={(e) => setRenameValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  setRenamingPath(null);
+                  setRenameValue('');
+                }
+              }}
+              autoFocus
+            />
+          </form>
+        </div>
+      );
+    }
 
     return (
-      <div key={node.absPath || node.relPath}>
-        <button
-          type="button"
-          className="wb-row"
-          data-active={isActive}
-          data-testid={`file-tree-item-${node.name}`}
-          aria-expanded={isDir ? isExpanded : undefined}
-          onClick={() => {
-            if (isDir) {
-              setSelectedDir(node.absPath);
-              toggleDir(node.relPath);
-            } else {
-              onSelectFile(node);
-            }
-          }}
-          style={{ paddingLeft: `${12 + depth * 14}px` }}
-        >
-          {isDir && (
-            <span className="wb-tree-chevron">
-              <Icon name={isExpanded ? 'chevronDown' : 'chevronRight'} size={12} />
+      <div key={nodeKey}>
+        <div className="wb-row-wrap" data-active={isActive || undefined}>
+          <button
+            type="button"
+            className="wb-row"
+            data-active={isActive}
+            data-testid={`file-tree-item-${node.name}`}
+            aria-expanded={isDir ? isExpanded : undefined}
+            onClick={() => {
+              if (isDir) {
+                setSelectedDir(node.absPath);
+                toggleDir(node.relPath);
+              } else {
+                onSelectFile(node);
+              }
+            }}
+            style={{ paddingLeft: `${12 + depth * 14}px` }}
+          >
+            {isDir && (
+              <span className="wb-tree-chevron">
+                <Icon name={isExpanded ? 'chevronDown' : 'chevronRight'} size={12} />
+              </span>
+            )}
+            <span className="wb-file-icon" data-kind={isDir ? 'other' : getFileIconKind(node.name)}>
+              <Icon name={isDir ? (isExpanded ? 'folderOpen' : 'folder') : 'file'} size={14} />
             </span>
+            <span className="wb-row-label">{node.name}</span>
+            {node.gitStatus && (
+              <span className="wb-git" data-status={node.gitStatus}>
+                {node.gitStatus}
+              </span>
+            )}
+          </button>
+          {onRenameEntry && (
+            <button
+              type="button"
+              className="wb-row-action"
+              data-testid={`explorer-rename-${node.name}`}
+              aria-label={`Rename ${node.name}`}
+              title="Rename"
+              onClick={() => startRename(node)}
+            >
+              <Icon name="pencil" size={12} />
+            </button>
           )}
-          <span className="wb-file-icon" data-kind={isDir ? 'other' : getFileIconKind(node.name)}>
-            <Icon name={isDir ? (isExpanded ? 'folderOpen' : 'folder') : 'file'} size={14} />
-          </span>
-          <span className="wb-row-label">{node.name}</span>
-          {node.gitStatus && (
-            <span className="wb-git" data-status={node.gitStatus}>
-              {node.gitStatus}
-            </span>
+          {onDeleteEntry && (
+            <button
+              type="button"
+              className="wb-row-action"
+              data-testid={`explorer-delete-${node.name}`}
+              aria-label={`Delete ${node.name}`}
+              title="Delete"
+              onClick={() => setPendingDelete(node)}
+            >
+              <Icon name="trash" size={12} />
+            </button>
           )}
-        </button>
+        </div>
 
         {isDir && isExpanded && node.children && (
           <div>{node.children.map((child) => renderNode(child, depth + 1))}</div>
@@ -187,11 +282,62 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
       {/* File Tree */}
       <div className="wb-body">
         {tree.length === 0 ? (
-          <div className="wb-empty">No files found</div>
+          <div className="wb-empty explorer-empty">
+            <span>{rootName === 'NO FOLDER' ? 'No folder open' : 'No files found'}</span>
+            {onOpenFolder && (
+              <button
+                type="button"
+                className="wb-quick-btn"
+                data-testid="explorer-open-folder"
+                onClick={onOpenFolder}
+              >
+                Open Folder
+              </button>
+            )}
+          </div>
         ) : (
           tree.map((node) => renderNode(node, 0))
         )}
       </div>
+
+      {/* Delete confirmation: destructive actions are never one-click. */}
+      {pendingDelete && (
+        <div
+          className="app-palette-scrim"
+          data-testid="explorer-delete-confirm"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setPendingDelete(null);
+          }}
+        >
+          <div className="app-palette" role="dialog" aria-label="Confirm delete">
+            <div className="wb-panel-title">Delete {pendingDelete.name}?</div>
+            <p className="wb-empty">
+              {pendingDelete.kind === 'directory'
+                ? 'This removes the folder and everything inside it.'
+                : 'This removes the file from disk.'}{' '}
+              This cannot be undone.
+            </p>
+            <div className="wb-panel-actions">
+              <button
+                type="button"
+                className="wb-quick-btn"
+                data-testid="explorer-delete-cancel"
+                onClick={() => setPendingDelete(null)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="wb-quick-btn"
+                data-testid="explorer-delete-confirm-btn"
+                onClick={() => void confirmDelete()}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

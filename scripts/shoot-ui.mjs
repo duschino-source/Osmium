@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* global window, setTimeout, clearTimeout */
 /**
  * OsmiumIDE screenshot gate (DESIGN.md §5.4) — Taste Skill's browser
  * check, translated to Electron. Captures the renderer via Playwright
@@ -64,6 +65,16 @@ async function main() {
   try {
     const page = await app.firstWindow();
     await page.waitForTimeout(700);
+    // Show the real repository instead of the empty first-run explorer.
+    try {
+      await page.evaluate(async (rootPath) => {
+        await window.osmium?.ide?.setWorkspaceRoot?.(rootPath);
+      }, root);
+      await page.reload();
+      await page.waitForTimeout(900);
+    } catch {
+      // The empty state is still a valid capture if the root cannot be set.
+    }
     // The sidebar is user-collapsible; make sure the footer/nav is reachable.
     const sidebarPressed = await page
       .locator('[data-testid="sidebar-toggle"]')
@@ -142,9 +153,31 @@ async function main() {
       }
     }
   } finally {
-    await app.close();
+    // The final app-close can wait forever if a wedged CLI/PTY survived the
+    // many scenario interactions above. Never let the screenshot gate hang.
+    let closeTimer;
+    try {
+      await Promise.race([
+        app.close(),
+        new Promise((_, reject) => {
+          closeTimer = setTimeout(() => reject(new Error('app close timed out')), 15000);
+          closeTimer.unref?.();
+        }),
+      ]);
+    } catch {
+      try {
+        app.process().kill();
+      } catch {
+        // Already gone.
+      }
+    } finally {
+      if (closeTimer) clearTimeout(closeTimer);
+    }
   }
   console.log('Screenshot gate: review .agents/ui-shots/ against docs/design/ and DESIGN.md.');
+  // Playwright keeps its driver handle open even after the app exits; this is
+  // a CLI gate, so terminate deterministically instead of waiting on it.
+  process.exit(0);
 }
 
 main().catch((e) => {

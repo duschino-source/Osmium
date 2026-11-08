@@ -3,7 +3,9 @@ import { FileExplorer, type FileNode } from './FileExplorer.js';
 import { EditorWorkspace, type EditorTab } from './EditorWorkspace.js';
 import { SearchPanel, type SearchMatchItem } from './SearchPanel.js';
 import { SourceControlPanel, type GitStatusItem } from './SourceControlPanel.js';
-import { TerminalPanel } from './TerminalPanel.js';
+import { XtermTerminal, type TerminalBridge } from './XtermTerminal.js';
+import { QuickOpenPanel } from './QuickOpenPanel.js';
+import type { QuickOpenCandidate } from './quick-open.js';
 import { AgentDockedPanel } from './AgentDockedPanel.js';
 import { StatusBar } from './StatusBar.js';
 import { SettingsPanel, type SettingsValues } from './SettingsPanel.js';
@@ -13,6 +15,8 @@ export type IdeActivity = 'explorer' | 'search' | 'git' | 'settings';
 
 export interface IdeWorkbenchProps {
   rootName?: string;
+  /** Absolute workspace root. Drives the terminal cwd and Quick Open. */
+  workspaceRoot?: string;
   fileTree: FileNode[];
   tabs: EditorTab[];
   activeTabId?: string;
@@ -34,15 +38,32 @@ export interface IdeWorkbenchProps {
   onStageFile?: (path: string) => Promise<void>;
   onUnstageFile?: (path: string) => Promise<void>;
   onCommit?: (msg: string) => Promise<void>;
-  onExecuteCommand?: (cmd: string) => Promise<string | void>;
   onSendMessageToAgent?: (msg: string) => Promise<string | void>;
   onCreateEntry?: (targetPath: string, kind: 'file' | 'directory') => Promise<void>;
+  onRenameEntry?: (oldPath: string, newPath: string) => Promise<void>;
+  onDeleteEntry?: (targetPath: string) => Promise<void>;
+  onOpenFolder?: () => void;
   onRefreshExplorer?: () => void;
   onRefreshGit?: () => void;
+  /** Real PTY bridge. When absent the terminal shows an honest unavailable state. */
+  terminalBridge?: TerminalBridge;
+  /** Flat file index for Ctrl+P. */
+  quickOpenFiles?: readonly QuickOpenCandidate[];
+  /** Opens a workspace-relative path from Quick Open. */
+  onOpenPath?: (relPath: string) => void;
+  /** Cursor position reported by the editor. */
+  cursor?: { line: number; column: number };
+  onCursorChange?: (position: { line: number; column: number }) => void;
+  problemCounts?: { errors: number; warnings: number };
+  lineEnding?: string;
+  /** External request to reveal a line (Quick Open / Go to Line). */
+  reveal?: { tabId: string; line: number; column?: number; nonce: number } | null;
+  onRequestGoToLine?: () => void;
 }
 
 export const IdeWorkbench: React.FC<IdeWorkbenchProps> = ({
   rootName = 'OSMIUM',
+  workspaceRoot,
   fileTree,
   tabs,
   activeTabId,
@@ -63,11 +84,22 @@ export const IdeWorkbench: React.FC<IdeWorkbenchProps> = ({
   onStageFile = async () => {},
   onUnstageFile = async () => {},
   onCommit = async () => {},
-  onExecuteCommand,
   onSendMessageToAgent,
   onCreateEntry,
+  onRenameEntry,
+  onDeleteEntry,
+  onOpenFolder,
   onRefreshExplorer,
   onRefreshGit,
+  terminalBridge,
+  quickOpenFiles = [],
+  onOpenPath,
+  cursor,
+  onCursorChange,
+  problemCounts,
+  lineEnding = 'LF',
+  reveal,
+  onRequestGoToLine,
 }) => {
   const [internalActivity, setInternalActivity] = useState<IdeActivity>('explorer');
   const activeActivity = activity ?? internalActivity;
@@ -86,9 +118,26 @@ export const IdeWorkbench: React.FC<IdeWorkbenchProps> = ({
     onActivityChange?.(next);
   };
   const [terminalOpen, setTerminalOpen] = useState(true);
+  const [quickOpenOpen, setQuickOpenOpen] = useState(false);
   const [agentPanelOpen, setAgentPanelOpen] = useState(
     () => typeof window === 'undefined' || window.innerWidth >= 1024,
   );
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+      const key = e.key.toLowerCase();
+      if (key === 'p' && !e.shiftKey) {
+        e.preventDefault();
+        setQuickOpenOpen(true);
+      } else if (key === 'g' && !e.shiftKey) {
+        e.preventDefault();
+        onRequestGoToLine?.();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [onRequestGoToLine]);
 
   useEffect(() => {
     if (typeof window.matchMedia !== 'function') return;
@@ -175,6 +224,9 @@ export const IdeWorkbench: React.FC<IdeWorkbenchProps> = ({
               activeFilePath={activeTab?.path}
               onSelectFile={onSelectFile}
               onCreateEntry={onCreateEntry}
+              onRenameEntry={onRenameEntry}
+              onDeleteEntry={onDeleteEntry}
+              onOpenFolder={onOpenFolder}
               onRefresh={onRefreshExplorer}
             />
           )}
@@ -216,10 +268,13 @@ export const IdeWorkbench: React.FC<IdeWorkbenchProps> = ({
             onCloseTab={onCloseTab}
             onChangeContent={onChangeContent}
             onSaveFile={onSaveFile}
+            reveal={reveal}
+            onCursorChange={onCursorChange}
           />
           {terminalOpen && (
-            <TerminalPanel
-              onExecuteCommand={onExecuteCommand}
+            <XtermTerminal
+              cwd={workspaceRoot || '.'}
+              bridge={terminalBridge}
               onClose={() => setTerminalOpen(false)}
             />
           )}
@@ -243,22 +298,36 @@ export const IdeWorkbench: React.FC<IdeWorkbenchProps> = ({
       {/* Bottom Status Bar */}
       <StatusBar
         branch={branch}
-        errorCount={0}
-        warningCount={0}
-        line={1}
-        column={1}
+        errorCount={problemCounts?.errors ?? 0}
+        warningCount={problemCounts?.warnings ?? 0}
+        line={cursor?.line ?? 1}
+        column={cursor?.column ?? 1}
         encoding="UTF-8"
-        lineEnding="CRLF"
+        lineEnding={lineEnding}
         language={
           activeTab?.name.endsWith('.rs')
             ? 'Rust'
             : activeTab?.name.endsWith('.json')
               ? 'JSON'
-              : 'TypeScript'
+              : activeTab?.name.endsWith('.md')
+                ? 'Markdown'
+                : activeTab
+                  ? 'TypeScript'
+                  : 'Plain Text'
         }
         activeCliName={activeCliName}
         onToggleTerminal={() => setTerminalOpen(!terminalOpen)}
         onToggleAgentPanel={() => setAgentPanelOpen(!agentPanelOpen)}
+      />
+
+      <QuickOpenPanel
+        open={quickOpenOpen}
+        candidates={quickOpenFiles}
+        onSelect={(relPath) => onOpenPath?.(relPath)}
+        onClose={() => setQuickOpenOpen(false)}
+        emptyHint={
+          workspaceRoot ? 'No files in this workspace yet.' : 'Open a folder to search its files.'
+        }
       />
     </div>
   );

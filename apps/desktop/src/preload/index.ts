@@ -72,6 +72,27 @@ const osmiumBridge = {
     },
   },
   ide: {
+    getWorkspaceRoot: () => ipcRenderer.invoke('ide:getWorkspaceRoot'),
+    openFolder: () => ipcRenderer.invoke('ide:openFolder'),
+    setWorkspaceRoot: (rootPath: string) => ipcRenderer.invoke('ide:setWorkspaceRoot', rootPath),
+    listWorkspaceFiles: (rootPath?: string) =>
+      ipcRenderer.invoke('ide:listWorkspaceFiles', rootPath),
+    watchWorkspace: (rootPath?: string) => ipcRenderer.invoke('ide:watchWorkspace', rootPath),
+    unwatchWorkspace: () => ipcRenderer.invoke('ide:unwatchWorkspace'),
+    onWorkspaceChanged: (cb: (batch: unknown) => void) => {
+      const listener = (_event: unknown, batch: unknown) => cb(batch);
+      ipcRenderer.on('ide:workspaceChanged', listener);
+      return () => {
+        ipcRenderer.removeListener('ide:workspaceChanged', listener);
+      };
+    },
+    onWorkspaceWatchError: (cb: (payload: { message: string }) => void) => {
+      const listener = (_event: unknown, payload: { message: string }) => cb(payload);
+      ipcRenderer.on('ide:workspaceWatchError', listener);
+      return () => {
+        ipcRenderer.removeListener('ide:workspaceWatchError', listener);
+      };
+    },
     readTree: (rootPath: string, relPath?: string) =>
       ipcRenderer.invoke('ide:readTree', rootPath, relPath),
     readFile: (filePath: string) => ipcRenderer.invoke('ide:readFile', filePath),

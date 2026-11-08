@@ -22,7 +22,10 @@ import {
   type IconName,
   type IdeActivity,
   type SettingsValues,
+  type QuickOpenCandidate,
+  type TerminalBridge,
 } from '@osmium/ui';
+import { parseGoToLine } from '@osmium/ui';
 import { CliHubView, type CliHubEntry, type CliTestResult } from './CliHubView.js';
 import { SessionView, type SessionStatus } from './SessionView.js';
 import { BrandMark } from './BrandMark.js';
@@ -74,14 +77,6 @@ export interface SidebarProjectItem {
   primaryCli: CliId;
 }
 
-const INITIAL_PROJECTS: SidebarProjectItem[] = [
-  { id: 'api-gateway', name: 'api-gateway', primaryCli: 'codex' },
-  { id: 'landing-site', name: 'landing-site', primaryCli: 'antigravity' },
-  { id: 'cli-playground', name: 'cli-playground', primaryCli: 'deepseek' },
-];
-
-const RECENT_SESSIONS: string[] = ['Add copy review brief', 'Fix auth redirect'];
-
 const PRIMARY_NAV_ITEMS = ['New Task', 'Projects', 'Teamwork', 'Search'] as const;
 const FOOTER_NAV_ITEMS = ['CLI Hub', 'Automations', 'Extensions', 'Settings'] as const;
 
@@ -97,6 +92,7 @@ const NAV_ICONS: Record<string, IconName> = {
 };
 
 const FILE_MENU_ITEMS: DropdownItem[] = [
+  { key: 'open-folder', label: 'Open Folder...', badge: 'Ctrl+O' },
   { key: 'new-task', label: 'New Task', badge: 'Ctrl+N' },
   { key: 'new-session', label: 'New Session', badge: 'Ctrl+Shift+N' },
   { key: 'save-file', label: 'Save File', badge: 'Ctrl+S' },
@@ -122,220 +118,6 @@ const HELP_MENU_ITEMS: DropdownItem[] = [
   { key: 'about', label: 'About OsmiumIDE v0.1.0' },
 ];
 
-const DEFAULT_FILE_TREE: FileNode[] = [
-  {
-    name: 'apps',
-    relPath: 'apps',
-    absPath: 'apps',
-    kind: 'directory',
-    children: [
-      {
-        name: 'desktop',
-        relPath: 'apps/desktop',
-        absPath: 'apps/desktop',
-        kind: 'directory',
-        children: [
-          {
-            name: 'src',
-            relPath: 'apps/desktop/src',
-            absPath: 'apps/desktop/src',
-            kind: 'directory',
-            children: [
-              {
-                name: 'App.tsx',
-                relPath: 'apps/desktop/src/renderer/App.tsx',
-                absPath: 'apps/desktop/src/renderer/App.tsx',
-                kind: 'file',
-              },
-              {
-                name: 'index.ts',
-                relPath: 'apps/desktop/src/main/index.ts',
-                absPath: 'apps/desktop/src/main/index.ts',
-                kind: 'file',
-              },
-            ],
-          },
-          {
-            name: 'package.json',
-            relPath: 'apps/desktop/package.json',
-            absPath: 'apps/desktop/package.json',
-            kind: 'file',
-          },
-        ],
-      },
-    ],
-  },
-  {
-    name: 'packages',
-    relPath: 'packages',
-    absPath: 'packages',
-    kind: 'directory',
-    children: [
-      {
-        name: 'ui',
-        relPath: 'packages/ui',
-        absPath: 'packages/ui',
-        kind: 'directory',
-        children: [
-          {
-            name: 'src',
-            relPath: 'packages/ui/src',
-            absPath: 'packages/ui/src',
-            kind: 'directory',
-            children: [
-              {
-                name: 'components.tsx',
-                relPath: 'packages/ui/src/components.tsx',
-                absPath: 'packages/ui/src/components.tsx',
-                kind: 'file',
-              },
-              {
-                name: 'tokens.css',
-                relPath: 'packages/ui/src/tokens.css',
-                absPath: 'packages/ui/src/tokens.css',
-                kind: 'file',
-              },
-            ],
-          },
-          {
-            name: 'package.json',
-            relPath: 'packages/ui/package.json',
-            absPath: 'packages/ui/package.json',
-            kind: 'file',
-          },
-        ],
-      },
-      {
-        name: 'core',
-        relPath: 'packages/core',
-        absPath: 'packages/core',
-        kind: 'directory',
-        children: [
-          {
-            name: 'types.ts',
-            relPath: 'packages/core/src/types.ts',
-            absPath: 'packages/core/src/types.ts',
-            kind: 'file',
-          },
-        ],
-      },
-      {
-        name: 'ide-core',
-        relPath: 'packages/ide-core',
-        absPath: 'packages/ide-core',
-        kind: 'directory',
-        children: [
-          {
-            name: 'file-service.ts',
-            relPath: 'packages/ide-core/src/file-service.ts',
-            absPath: 'packages/ide-core/src/file-service.ts',
-            kind: 'file',
-          },
-          {
-            name: 'ipc-types.ts',
-            relPath: 'packages/ide-core/src/ipc-types.ts',
-            absPath: 'packages/ide-core/src/ipc-types.ts',
-            kind: 'file',
-          },
-        ],
-      },
-    ],
-  },
-  {
-    name: 'crates',
-    relPath: 'crates',
-    absPath: 'crates',
-    kind: 'directory',
-    children: [
-      {
-        name: 'core',
-        relPath: 'crates/core',
-        absPath: 'crates/core',
-        kind: 'directory',
-        children: [
-          {
-            name: 'lib.rs',
-            relPath: 'crates/core/src/lib.rs',
-            absPath: 'crates/core/src/lib.rs',
-            kind: 'file',
-          },
-        ],
-      },
-      {
-        name: 'adapters',
-        relPath: 'crates/adapters',
-        absPath: 'crates/adapters',
-        kind: 'directory',
-        children: [
-          {
-            name: 'lib.rs',
-            relPath: 'crates/adapters/src/lib.rs',
-            absPath: 'crates/adapters/src/lib.rs',
-            kind: 'file',
-          },
-        ],
-      },
-      {
-        name: 'mock-cli',
-        relPath: 'crates/mock-cli',
-        absPath: 'crates/mock-cli',
-        kind: 'directory',
-        children: [
-          {
-            name: 'main.rs',
-            relPath: 'crates/mock-cli/src/main.rs',
-            absPath: 'crates/mock-cli/src/main.rs',
-            kind: 'file',
-          },
-        ],
-      },
-    ],
-  },
-  { name: 'Cargo.toml', relPath: 'Cargo.toml', absPath: 'Cargo.toml', kind: 'file' },
-  { name: 'package.json', relPath: 'package.json', absPath: 'package.json', kind: 'file' },
-  { name: 'README.md', relPath: 'README.md', absPath: 'README.md', kind: 'file' },
-  { name: 'PROJECT.md', relPath: 'PROJECT.md', absPath: 'PROJECT.md', kind: 'file' },
-];
-
-const INITIAL_TABS: EditorTab[] = [
-  {
-    id: 'tab-app',
-    name: 'App.tsx',
-    path: 'apps/desktop/src/renderer/App.tsx',
-    content: `// OsmiumIDE Main Application Component
-import React from 'react';
-
-export const App: React.FC = () => {
-  return <div>OsmiumIDE Workspace Active</div>;
-};
-`,
-    dirty: false,
-  },
-  {
-    id: 'tab-components',
-    name: 'components.tsx',
-    path: 'packages/ui/src/components.tsx',
-    content: `// OsmiumIDE Design System Components
-export * from './ide/index.js';
-`,
-    dirty: false,
-  },
-  {
-    id: 'tab-cargo',
-    name: 'Cargo.toml',
-    path: 'Cargo.toml',
-    content: `[workspace]
-members = [
-  "crates/core",
-  "crates/adapters",
-  "crates/mock-cli",
-]
-resolver = "2"
-`,
-    dirty: false,
-  },
-];
-
 export const App: React.FC = () => {
   const [topMode, setTopMode] = useState<'code' | 'chat'>('code');
   const [activeNav, setActiveNav] = useState<string>('New Task');
@@ -348,16 +130,25 @@ export const App: React.FC = () => {
   const [isMaximized, setIsMaximized] = useState<boolean>(false);
 
   // IDE State
-  const [fileTree, setFileTree] = useState<FileNode[]>(DEFAULT_FILE_TREE);
-  const [editorTabs, setEditorTabs] = useState<EditorTab[]>(INITIAL_TABS);
-  const [activeTabId, setActiveTabId] = useState<string>('tab-app');
+  const [fileTree, setFileTree] = useState<FileNode[]>([]);
+  const [editorTabs, setEditorTabs] = useState<EditorTab[]>([]);
+  const [activeTabId, setActiveTabId] = useState<string>('');
+  const [workspaceRoot, setWorkspaceRoot] = useState<string>('');
+  const [quickOpenFiles, setQuickOpenFiles] = useState<QuickOpenCandidate[]>([]);
+  const [cursor, setCursor] = useState<{ line: number; column: number }>({ line: 1, column: 1 });
+  const [reveal, setReveal] = useState<{
+    tabId: string;
+    line: number;
+    column?: number;
+    nonce: number;
+  } | null>(null);
+  const [lineEnding, setLineEnding] = useState<string>('LF');
+  const [workspaceError, setWorkspaceError] = useState<string>('');
+  const handleOpenFolderRef = useRef<(() => Promise<void>) | null>(null);
   const [gitStatusFiles, setGitStatusFiles] = useState<
     Array<{ path: string; status: 'M' | 'A' | 'D' | 'U' | 'R' | '?'; staged: boolean }>
-  >([
-    { path: 'apps/desktop/src/renderer/App.tsx', status: 'M', staged: false },
-    { path: 'packages/ui/src/ide/IdeWorkbench.tsx', status: 'A', staged: true },
-  ]);
-  const [currentBranch, setCurrentBranch] = useState<string>('main');
+  >([]);
+  const [currentBranch, setCurrentBranch] = useState<string>('');
   const [ideActivity, setIdeActivity] = useState<IdeActivity>('explorer');
   const [settings, setSettings] = useState<OsmiumSettings>(DEFAULT_OSMIUM_SETTINGS);
   const [paletteQuery, setPaletteQuery] = useState<string>('');
@@ -409,23 +200,44 @@ export const App: React.FC = () => {
         e.preventDefault();
         updateSettings({ sidebarVisible: !settings.sidebarVisible });
       }
+      if (e.key.toLowerCase() === 'o') {
+        e.preventDefault();
+        void handleOpenFolderRef.current?.();
+      }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [activeTabId, editorTabs, settings.sidebarVisible, settings.formatOnSave]);
 
   const refreshWorkspace = React.useCallback(async () => {
+    const bridge = getOsmiumBridge();
+    if (!bridge?.ide?.readTree) return;
+    const root = workspaceRoot;
+    if (!root) {
+      // No folder open: an empty tree is honest. The demo tree is gone.
+      setFileTree([]);
+      setQuickOpenFiles([]);
+      return;
+    }
     try {
-      const bridge = getOsmiumBridge();
-      if (!bridge?.ide?.readTree) return;
-      const [tree, branches, status] = await Promise.all([
-        bridge.ide.readTree(''),
-        bridge.ide.gitBranches(''),
-        bridge.ide.gitStatus(''),
+      const [tree, branches, status, files] = await Promise.all([
+        bridge.ide.readTree(root),
+        bridge.ide.gitBranches(root),
+        bridge.ide.gitStatus(root),
+        bridge.ide.listWorkspaceFiles?.(root).catch(() => []),
       ]);
-      if (Array.isArray(tree) && tree.length > 0) {
-        setFileTree(tree);
-      }
+      setFileTree(Array.isArray(tree) ? (tree as FileNode[]) : []);
+      setQuickOpenFiles(
+        Array.isArray(files)
+          ? files
+              .filter((entry) => entry.kind === 'file')
+              .map((entry) => ({
+                relPath: entry.relPath,
+                name: entry.name,
+                kind: entry.kind,
+              }))
+          : [],
+      );
       if (Array.isArray(branches) && branches.length > 0) {
         const current = branches.find((branch: any) => branch.current);
         if (current) setCurrentBranch(current.name);
@@ -438,10 +250,59 @@ export const App: React.FC = () => {
         setGitStatusFiles((status as any).files);
         if ((status as any).branch) setCurrentBranch(String((status as any).branch));
       }
-    } catch {
-      // mock/test fallback
+    } catch (error) {
+      setWorkspaceError(errorMessage(error));
+    }
+  }, [workspaceRoot]);
+
+  // Adopt an already-open root (or the last one) on mount.
+  useEffect(() => {
+    const bridge = getOsmiumBridge();
+    if (!bridge?.ide?.getWorkspaceRoot) return;
+    bridge.ide
+      .getWorkspaceRoot()
+      .then((root) => {
+        if (root) setWorkspaceRoot(root);
+      })
+      .catch(() => {
+        // No root yet is a normal first-run state.
+      });
+  }, []);
+
+  // Live filesystem watcher: refresh the tree when files change on disk.
+  useEffect(() => {
+    const bridge = getOsmiumBridge();
+    if (!bridge?.ide?.onWorkspaceChanged || !workspaceRoot) return;
+    const offChange = bridge.ide.onWorkspaceChanged(() => {
+      void refreshWorkspace();
+    });
+    const offError = bridge.ide.onWorkspaceWatchError?.((payload) => {
+      setWorkspaceError(payload.message);
+    });
+    void bridge.ide.watchWorkspace?.(workspaceRoot).catch(() => {});
+    return () => {
+      offChange();
+      offError?.();
+    };
+  }, [workspaceRoot, refreshWorkspace]);
+
+  const handleOpenFolder = React.useCallback(async () => {
+    const bridge = getOsmiumBridge();
+    if (!bridge?.ide?.openFolder) {
+      setWorkspaceError('Folder picker is unavailable in this environment.');
+      return;
+    }
+    try {
+      const root = await bridge.ide.openFolder();
+      if (!root) return;
+      setWorkspaceRoot(root);
+      setWorkspaceError('');
+    } catch (error) {
+      setWorkspaceError(errorMessage(error));
     }
   }, []);
+
+  handleOpenFolderRef.current = handleOpenFolder;
 
   useEffect(() => {
     const checkMaximized = async () => {
@@ -607,6 +468,9 @@ export const App: React.FC = () => {
   const handleMenuSelect = (key: string) => {
     setActiveMenu(null);
     switch (key) {
+      case 'open-folder':
+        void handleOpenFolder();
+        break;
       case 'new-task':
         setActiveNav('New Task');
         break;
@@ -783,28 +647,61 @@ export const App: React.FC = () => {
       return;
     }
 
-    let content = `// ${node.name}\n`;
-    try {
-      const res = await (window as any).osmium?.ide?.readFile?.(node.absPath);
-      if (res && typeof res.content === 'string') {
-        content = res.content;
-      }
-    } catch {
-      // fallback
+    const bridge = getOsmiumBridge();
+    if (!bridge?.ide?.readFile) {
+      setWorkspaceError('File reading is unavailable in this environment.');
+      return;
     }
 
+    let content: string;
+    let readOnly = false;
+    let detectedLineEnding = 'LF';
+    try {
+      const res = await bridge.ide.readFile(node.absPath);
+      content = res.content;
+      readOnly = res.largeFileSafeMode === true;
+      detectedLineEnding = res.lineEnding ?? 'LF';
+    } catch (error) {
+      // Never open a tab with invented content: report the failure instead.
+      setWorkspaceError(`Could not open ${node.name}: ${errorMessage(error)}`);
+      return;
+    }
+
+    setLineEnding(detectedLineEnding);
     const newTab: EditorTab = {
-      id: `tab-${Date.now()}`,
+      id: `tab-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       name: node.name,
       path: node.relPath || node.absPath,
       absPath: node.absPath,
       content,
       dirty: false,
+      readOnly,
     };
 
     setEditorTabs((prev) => [...prev, newTab]);
     setActiveTabId(newTab.id);
   };
+
+  /** Opens a workspace-relative path (Quick Open, search results). */
+  const handleOpenPath = React.useCallback(
+    async (relPath: string) => {
+      const bridge = getOsmiumBridge();
+      if (!bridge?.ide?.readFile) return;
+      const normalized = relPath.replace(/\\/g, '/');
+      const separator = workspaceRoot.includes('\\') ? '\\' : '/';
+      const absPath = workspaceRoot
+        ? `${workspaceRoot}${workspaceRoot.endsWith(separator) ? '' : separator}${normalized.replace(/\//g, separator)}`
+        : normalized;
+      await handleSelectFile({
+        name: normalized.split('/').pop() || normalized,
+        relPath: normalized,
+        absPath,
+        kind: 'file',
+      });
+    },
+    // handleSelectFile is recreated each render; the workspace root is the real input.
+    [workspaceRoot, editorTabs],
+  );
 
   const handleSaveFile = async (tabId: string) => {
     const tab = editorTabs.find((t) => t.id === tabId);
@@ -837,49 +734,107 @@ export const App: React.FC = () => {
   }, [settings.autoSave, editorTabs, settings.formatOnSave]);
 
   const handleCreateEntry = async (targetPath: string, kind: 'file' | 'directory') => {
+    const bridge = getOsmiumBridge();
+    if (!bridge?.ide?.createEntry) return;
+    // The explorer hands back a workspace-relative path; resolve it against the root.
+    const separator = workspaceRoot.includes('\\') ? '\\' : '/';
+    const absolute =
+      /^[a-zA-Z]:[\\/]/.test(targetPath) || targetPath.startsWith('/')
+        ? targetPath
+        : workspaceRoot
+          ? `${workspaceRoot}${workspaceRoot.endsWith(separator) ? '' : separator}${targetPath.replace(/\//g, separator)}`
+          : targetPath;
     try {
-      await getOsmiumBridge()?.ide?.createEntry?.(targetPath, kind);
+      await bridge.ide.createEntry(absolute, kind);
       await refreshWorkspace();
-    } catch {
-      // Leave the tree unchanged; the explorer keeps its inline form open.
+    } catch (error) {
+      setWorkspaceError(`Could not create ${targetPath}: ${errorMessage(error)}`);
+    }
+  };
+
+  const handleRenameEntry = async (oldPath: string, newPath: string) => {
+    const bridge = getOsmiumBridge();
+    if (!bridge?.ide?.renameEntry) return;
+    try {
+      await bridge.ide.renameEntry(oldPath, newPath);
+      // Reconcile open tabs: a renamed file keeps its buffer but changes path.
+      setEditorTabs((prev) =>
+        prev.map((tab) =>
+          tab.absPath === oldPath
+            ? {
+                ...tab,
+                absPath: newPath,
+                path: newPath,
+                name: newPath.split(/[\\/]/).pop() || tab.name,
+              }
+            : tab,
+        ),
+      );
+      await refreshWorkspace();
+    } catch (error) {
+      setWorkspaceError(`Could not rename: ${errorMessage(error)}`);
+    }
+  };
+
+  const handleDeleteEntry = async (targetPath: string) => {
+    const bridge = getOsmiumBridge();
+    if (!bridge?.ide?.deleteEntry) return;
+    try {
+      await bridge.ide.deleteEntry(targetPath);
+      // Close any tab whose file no longer exists.
+      setEditorTabs((prev) => {
+        const remaining = prev.filter(
+          (tab) =>
+            tab.absPath !== targetPath &&
+            !tab.absPath?.startsWith(targetPath + '\\') &&
+            !tab.absPath?.startsWith(targetPath + '/'),
+        );
+        if (remaining.length !== prev.length && !remaining.some((t) => t.id === activeTabId)) {
+          setActiveTabId(remaining[0]?.id ?? '');
+        }
+        return remaining;
+      });
+      await refreshWorkspace();
+    } catch (error) {
+      setWorkspaceError(`Could not delete: ${errorMessage(error)}`);
     }
   };
 
   const handleSearch = async (query: string, opts: any) => {
+    const bridge = getOsmiumBridge();
+    if (!bridge?.ide?.search || !workspaceRoot) return [];
     try {
-      const res = await (window as any).osmium?.ide?.search?.({
-        cwd: '',
-        query,
-        ...opts,
-      });
-      if (Array.isArray(res) && res.length > 0) return res;
-    } catch {
-      // fallback
+      const res = await bridge.ide.search({ cwd: workspaceRoot, query, ...opts });
+      return Array.isArray(res) ? res : [];
+    } catch (error) {
+      setWorkspaceError(`Search failed: ${errorMessage(error)}`);
+      return [];
     }
-    return [
-      {
-        filePath: 'apps/desktop/src/renderer/App.tsx',
-        relPath: 'apps/desktop/src/renderer/App.tsx',
-        line: 24,
-        column: 1,
-        lineText: `const [topMode, setTopMode] = useState<'code' | 'chat'>('${query}');`,
-        matchText: query,
-      },
-    ];
   };
 
-  const handleExecuteCommand = async (cmd: string) => {
-    if (cmd.startsWith('git ')) {
-      const parts = cmd.split(' ').slice(1);
-      if (parts[0] === 'status') {
-        const res = await (window as any).osmium?.ide?.gitStatus?.('');
-        return res
-          ? JSON.stringify(res, null, 2)
-          : 'On branch main\nNothing to commit, working tree clean';
-      }
+  const terminalBridge: TerminalBridge | undefined = React.useMemo(() => {
+    const bridge = getOsmiumBridge();
+    if (!bridge?.ide?.terminalCreate) return undefined;
+    return {
+      create: (opts) => bridge.ide.terminalCreate(opts),
+      write: (id, data) => bridge.ide.terminalWrite(id, data),
+      resize: (id, cols, rows) => bridge.ide.terminalResize(id, cols, rows),
+      close: (id) => bridge.ide.terminalClose(id),
+      onData: (cb) => bridge.ide.onTerminalData(cb),
+    };
+  }, []);
+
+  const handleRequestGoToLine = React.useCallback(() => {
+    if (!activeTabId) return;
+    const input = window.prompt('Go to line (line or line:column)', '1');
+    if (!input) return;
+    const parsed = parseGoToLine(input);
+    if (!parsed) {
+      setWorkspaceError(`Not a line number: ${input}`);
+      return;
     }
-    return `[Command: "${cmd}" executed successfully in Osmium IDE terminal session]`;
-  };
+    setReveal({ tabId: activeTabId, line: parsed.line, column: parsed.column, nonce: Date.now() });
+  }, [activeTabId]);
 
   const handleSendMessageToAgent = async (msg: string) => {
     // The docked panel is a launcher into the same real session surface; it
@@ -887,6 +842,16 @@ export const App: React.FC = () => {
     setTopMode('chat');
     await handleSendPrompt(msg);
   };
+
+  const projects: SidebarProjectItem[] = workspaceRoot
+    ? [
+        {
+          id: workspaceRoot,
+          name: workspaceRoot.split(/[\\/]/).filter(Boolean).pop() || 'workspace',
+          primaryCli: activeCliId,
+        },
+      ]
+    : [];
 
   const showCliHub = activeNav === 'CLI Hub';
   const showSession = topMode === 'chat' && !!session && !showCliHub;
@@ -1057,6 +1022,14 @@ export const App: React.FC = () => {
     command.run();
   };
 
+  const handleCursorChange = React.useCallback((position: { line: number; column: number }) => {
+    setCursor((previous) =>
+      previous.line === position.line && previous.column === position.column
+        ? previous
+        : { line: position.line, column: position.column },
+    );
+  }, []);
+
   return (
     <div data-testid="app-shell" className="app-shell">
       {/* Unified 44px toolbar (DESIGN.md §3) replacing the OS titlebar */}
@@ -1222,6 +1195,20 @@ export const App: React.FC = () => {
         </div>
       </header>
 
+      {workspaceError && (
+        <div className="app-error-banner" role="alert" data-testid="workspace-error">
+          <span>{workspaceError}</span>
+          <button
+            type="button"
+            className="wb-icon-btn"
+            aria-label="Dismiss workspace error"
+            onClick={() => setWorkspaceError('')}
+          >
+            <Icon name="x" size={13} />
+          </button>
+        </div>
+      )}
+
       {/* Main Workspace Body */}
       <div data-testid="app-body" className="app-body">
         {/* Left Navigation Sidebar — source list (DESIGN.md §3) */}
@@ -1294,42 +1281,32 @@ export const App: React.FC = () => {
               <div className="app-section">
                 <div className="app-section-title">PROJECTS</div>
                 <div className="app-nav">
-                  {INITIAL_PROJECTS.map((proj) => {
-                    const isSelected = activeNav === `project:${proj.id}`;
-                    return (
-                      <button
-                        key={proj.id}
-                        type="button"
-                        data-testid={`sidebar-project-${proj.id}`}
-                        onClick={() => setActiveNav(`project:${proj.id}`)}
-                        className="app-nav-item"
-                        data-active={isSelected || undefined}
-                      >
-                        <span
-                          aria-hidden="true"
-                          className="app-project-dot"
-                          style={{ backgroundColor: getCliCssVariable(proj.primaryCli) }}
-                        />
-                        <span className="wb-row-label">{proj.name}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* RECENT Section */}
-              <div className="app-section">
-                <div className="app-section-title">RECENT</div>
-                <div className="app-nav">
-                  {RECENT_SESSIONS.map((sessionName) => (
-                    <button
-                      key={sessionName}
-                      type="button"
-                      className="app-nav-item app-recent-item"
-                    >
-                      <span className="wb-row-label">{sessionName}</span>
-                    </button>
-                  ))}
+                  {projects.length === 0 ? (
+                    <div className="sidebar-empty" data-testid="sidebar-projects-empty">
+                      No projects yet
+                    </div>
+                  ) : (
+                    projects.map((proj) => {
+                      const isSelected = activeNav === `project:${proj.id}`;
+                      return (
+                        <button
+                          key={proj.id}
+                          type="button"
+                          data-testid={`sidebar-project-${proj.id}`}
+                          onClick={() => setActiveNav(`project:${proj.id}`)}
+                          className="app-nav-item"
+                          data-active={isSelected || undefined}
+                        >
+                          <span
+                            aria-hidden="true"
+                            className="app-project-dot"
+                            style={{ backgroundColor: getCliCssVariable(proj.primaryCli) }}
+                          />
+                          <span className="wb-row-label">{proj.name}</span>
+                        </button>
+                      );
+                    })
+                  )}
                 </div>
               </div>
             </div>
@@ -1453,7 +1430,8 @@ export const App: React.FC = () => {
         {/* Full IDE Workbench View (Code Mode) */}
         {showWorkbench && (
           <IdeWorkbench
-            rootName="OSMIUM"
+            rootName={workspaceRoot ? workspaceRoot.split(/[\\/]/).pop() || 'OSMIUM' : 'NO FOLDER'}
+            workspaceRoot={workspaceRoot}
             fileTree={fileTree}
             tabs={editorTabs}
             activeTabId={activeTabId}
@@ -1484,18 +1462,23 @@ export const App: React.FC = () => {
             onSaveFile={handleSaveFile}
             onSearch={handleSearch}
             onSelectSearchMatch={(match) => {
-              handleSelectFile({
-                name: match.relPath.split('/').pop() || match.relPath,
-                relPath: match.relPath,
-                absPath: match.filePath,
-                kind: 'file',
-              });
+              void handleOpenPath(match.relPath);
             }}
-            onExecuteCommand={handleExecuteCommand}
             onSendMessageToAgent={handleSendMessageToAgent}
             onCreateEntry={handleCreateEntry}
+            onRenameEntry={handleRenameEntry}
+            onDeleteEntry={handleDeleteEntry}
+            onOpenFolder={handleOpenFolder}
             onRefreshExplorer={refreshWorkspace}
             onRefreshGit={refreshWorkspace}
+            terminalBridge={terminalBridge}
+            quickOpenFiles={quickOpenFiles}
+            onOpenPath={handleOpenPath}
+            cursor={cursor}
+            onCursorChange={handleCursorChange}
+            lineEnding={lineEnding}
+            reveal={reveal}
+            onRequestGoToLine={handleRequestGoToLine}
           />
         )}
       </div>

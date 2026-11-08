@@ -2,8 +2,8 @@ import fs from 'node:fs';
 import fsp from 'node:fs/promises';
 import path from 'node:path';
 import type { FileReadResult, FileTreeNode, FileWriteResult } from './ipc-types.js';
+import { WORKSPACE_IGNORED_DIRS as IGNORED_DIRS } from './workspace-service.js';
 
-const IGNORED_DIRS = new Set(['.git', 'node_modules', 'dist', 'target', '.turbo', '.cache']);
 const MAX_SAFE_FILE_SIZE = 2 * 1024 * 1024; // 2MB
 
 export class FileService {
@@ -13,7 +13,7 @@ export class FileService {
   async readTree(
     rootPath: string,
     relPath: string = '',
-    maxDepth: number = 2,
+    maxDepth: number = 4,
   ): Promise<FileTreeNode[]> {
     const targetDir = relPath ? path.resolve(rootPath, relPath) : path.resolve(rootPath);
     try {

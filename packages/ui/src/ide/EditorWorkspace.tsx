@@ -265,19 +265,21 @@ export const EditorWorkspace: React.FC<EditorWorkspaceProps> = ({
 
   if (!activeTab || tabs.length === 0) {
     return (
-      <div className="ed-empty" data-testid="ide-editor-empty">
-        <Icon name="file" size={44} strokeWidth={1.1} className="ed-empty-icon" />
-        <div className="ed-empty-title">No Editor</div>
-        <dl className="ed-empty-keys">
-          {emptyShortcuts.map((s) => (
-            <div key={s.label} className="ed-empty-row">
-              <dt>{s.label}</dt>
-              <dd>
-                <kbd>{s.keys}</kbd>
-              </dd>
-            </div>
-          ))}
-        </dl>
+      <div className="ed" data-testid="ide-editor-workspace">
+        <div className="ed-empty" data-testid="ide-editor-empty">
+          <Icon name="file" size={44} strokeWidth={1.1} className="ed-empty-icon" />
+          <div className="ed-empty-title">No Editor</div>
+          <dl className="ed-empty-keys">
+            {emptyShortcuts.map((s) => (
+              <div key={s.label} className="ed-empty-row">
+                <dt>{s.label}</dt>
+                <dd>
+                  <kbd>{s.keys}</kbd>
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </div>
       </div>
     );
   }

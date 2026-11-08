@@ -4,7 +4,7 @@
 
 ---
 
-## Current Status: Phase 0 (M1 — Scaffold) Complete; M2 vertical slice wired + Settings/IDE finish (theme palettes, persisted settings, command palette, file creation)
+## Current Status: Phase 0 (M1 — Scaffold) Complete; IDE-1 core functional (real workspace, watcher, xterm PTY, Quick Open, explorer lifecycle, resizable sidebar) — session restore/LSP/Monaco next
 
 ### Session log
 - **2026-11-07, session 1**: The worker team scaffolded Phase 0, then stopped when it hit its model quota before the review gates. The orchestrator then reviewed the work and fixed:
@@ -60,6 +60,16 @@
   - **Tokens/design**: `--brand-mark-*` logo tokens, `--palette-*` swatches, `data-palette`/`data-font-size` token sets; `DESIGN.md` documents the logo exception and the one-tint-per-palette rule.
   - **Verification**: `pnpm typecheck`/`lint`/`format:check` clean; `pnpm test` 14 files / 77 tests passed; `pnpm test:e2e` 1 passed (Chat brand Osmium, IDE brand OsmiumIDE, sidebar toggle, Settings panel + palettes); screenshot gate captured Code/Home/Session/Approval/CLI Hub/Settings at 1440/1200×720/960×600 light+dark and the settings panel was reviewed.
   - **Not done / next**: format-on-save is conservative (JSON pretty-print + trailing whitespace, not a language formatter); the terminal remains a command surface rather than a full xterm; explorer rename/delete are still main-process handlers without row actions; LSP/debugger/full Monaco, session persistence/checkpoints, `switchCli`, slash commands, teamwork, and Codex/Antigravity verification still follow.
+- **2026-11-08, IDE-1 core continuation (Qwen handoff + orchestrator repair)**:
+  - **Workspace lifecycle**: new `packages/ide-core/src/workspace-service.ts` owns the root, a debounced chokidar watcher, and the flat file index. Real IPC: `ide:getWorkspaceRoot`, `openFolder` (Electron native picker), `setWorkspaceRoot`, `listWorkspaceFiles`, `watchWorkspace`, `unwatchWorkspace`; change/error batches are pushed to the renderer. The app adopts the persisted root, refreshes on watcher events, and exposes Open Folder in the File menu, `Ctrl+O`, and the explorer empty state.
+  - **Real terminal**: `XtermTerminal` renders `@xterm/xterm` against the real `TerminalService` (node-pty on Windows ConPTY, spawn fallback), with write/resize/close, shell label, theme tokens, and `terminalService.closeAll()` on quit. The e2e test asserts the xterm element and shell label; the screenshot gate shows a live PowerShell prompt.
+  - **Explorer lifecycle**: inline rename, confirmed delete, Open Folder empty state, and a live filesystem watcher. Ignored-folder sets are shared between `FileService` and `WorkspaceService` (`.git`, `node_modules`, `dist`, `target`, build output, `.agents`, `.perch`, `test-results`, `playwright-report`, …). Tree depth is 4; Quick Open uses the flat index.
+  - **Quick Open / Go to Line**: `Ctrl+P` opens a fuzzy file picker; `Ctrl+G` parses `line`, `line:column`, and bare columns; UI and pure matching tests.
+  - **Honest empty start**: removed the demo file tree, demo editor tabs, fake git status, and fake project/recent lists. With no workspace the explorer says “No folder open” with an Open Folder action, the editor shows “No Editor”, and the status bar says “Plain Text”. The project list shows the open workspace only.
+  - **Critical render-loop repair**: an inline `onCursorChange` prop was recreated each render, so `EditorWorkspace`’s cursor effect updated App state and re-rendered forever (the whole Vitest run hung). Replaced with a stable `useCallback` and deduplicated cursor updates; the full suite now completes.
+  - **Shutdown repair**: the app now has an 8 s force-exit watchdog after the graceful adapter-host close, and the screenshot gate has a close timeout + deterministic exit, so a wedged CLI/PTY cannot leave Electron running.
+  - **Verification**: `pnpm typecheck`/`lint`/`format:check` clean; `pnpm test` 18 files / 111 tests passed; `pnpm build` exit 0; `pnpm test:e2e` 1 passed (brands, sidebar, real terminal, Settings); UI rules clean; screenshot gate completed Code/Home/Session/Approval/CLI Hub/Settings × 1440/1200×720/960×600 × light/dark and exited without orphan processes.
+  - **Not done / next**: session restore (tabs/layout after restart), lazy tree expansion beyond depth 4, LSP/Problems panel, Monaco/splits, debugger/tasks, language-aware formatter, Codex/Antigravity verification, session checkpoints/teamwork.
 - `e2e/runner.mjs` + `e2e/suite/` hold the E2E test track (tiers 1–4) the team wrote ahead of time for later phases. Not run in CI yet; they are enabled phase by phase as features land. `PROJECT.md`, `TEST_INFRA.md` and `TEST_READY.md` at the repo root are the team's planning notes.
 
 ### What Is Done

@@ -107,12 +107,49 @@ export class TerminalService {
     if (!session) return;
 
     if (session.ptyProcess) {
-      session.ptyProcess.kill();
+      try {
+        session.ptyProcess.kill();
+      } catch {
+        // The PTY may already be gone.
+      }
     } else if (session.process) {
-      session.process.kill();
+      this.killTree(session.process);
     }
 
     this.sessions.delete(id);
+  }
+
+  /**
+   * Kills a plain child process and its descendants. node-pty handles its own
+   * tree; this is the fallback path when the native module is unavailable.
+   */
+  private killTree(proc: ChildProcess): void {
+    const pid = proc.pid;
+    if (!pid) return;
+    if (process.platform === 'win32') {
+      try {
+        // /T kills the tree, /F forces it. Detached so we do not block quit.
+        spawn('taskkill', ['/pid', String(pid), '/T', '/F'], {
+          stdio: 'ignore',
+          windowsHide: true,
+        });
+        return;
+      } catch {
+        // Fall through to the portable kill.
+      }
+    }
+    try {
+      proc.kill('SIGKILL');
+    } catch {
+      // Already exited.
+    }
+  }
+
+  /** Closes every session. Called on app quit so no shell survives. */
+  closeAll(): void {
+    for (const id of [...this.sessions.keys()]) {
+      this.close(id);
+    }
   }
 
   list(): TerminalSessionInfo[] {

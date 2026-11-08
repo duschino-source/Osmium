@@ -17,6 +17,9 @@ test('Phase 0 Electron App Shell launches and matches DESIGN.md design spec', as
 
     // Home is the Chat surface; Code is the default mode, so switch first.
     await expect(window.getByTestId('titlebar-app-name')).toHaveText('OsmiumIDE');
+    // The IDE terminal is a real PTY-backed xterm, not a simulated log.
+    await expect(window.getByTestId('terminal-xterm')).toBeVisible();
+    await expect(window.getByTestId('terminal-shell-label')).toContainText(/powershell|bash|sh/i);
     // The navigation sidebar closes and reopens from the titlebar.
     await expect(window.getByTestId('app-sidebar')).toBeVisible();
     await window.getByTestId('sidebar-toggle').click();

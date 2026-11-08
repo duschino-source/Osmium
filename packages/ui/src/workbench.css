@@ -1181,6 +1181,13 @@
   color: var(--text-muted);
   text-align: center;
 }
+.explorer-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  text-align: left;
+}
 .wb-section-title {
   font-size: 11px;
   font-weight: 600;
@@ -1231,6 +1238,47 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* Explorer row hover actions (rename / delete). Hidden until hover or focus
+   so the tree stays quiet, but always reachable by keyboard. */
+.wb-row-wrap {
+  display: flex;
+  align-items: center;
+  border-radius: var(--radius-xs);
+}
+.wb-row-wrap:hover,
+.wb-row-wrap:focus-within {
+  background-color: var(--bg-hover);
+}
+.wb-row-wrap > .wb-row:hover,
+.wb-row-wrap > .wb-row[data-active='true'] {
+  background-color: transparent;
+}
+.wb-row-wrap[data-active='true'] {
+  background-color: var(--bg-selected);
+}
+.wb-row-action {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  margin-right: 4px;
+  border: none;
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.wb-row-wrap:hover .wb-row-action,
+.wb-row-wrap:focus-within .wb-row-action {
+  display: flex;
+}
+.wb-row-action:hover {
+  background-color: var(--bg-control-hover);
+  color: var(--text-ink);
+}
 .wb-git {
   font-size: 10px;
   font-weight: 700;
@@ -1278,6 +1326,26 @@
   border-top: 1px solid var(--border-default);
   display: flex;
   flex-direction: column;
+}
+/* Real PTY terminal host. xterm owns everything inside this box. */
+.wb-term-xterm {
+  flex: 1;
+  min-height: 0;
+  padding: 4px 6px;
+  overflow: hidden;
+}
+.wb-term-xterm .xterm {
+  height: 100%;
+}
+.wb-term-xterm .xterm-viewport {
+  background-color: transparent !important;
+  scrollbar-width: thin;
+}
+.wb-term-shell {
+  color: var(--text-faint);
+  font-size: var(--font-size-caption);
+  font-family: var(--font-mono);
+  margin-right: 6px;
 }
 .wb-term-head {
   display: flex;
@@ -1672,6 +1740,23 @@
 .app-sidebar-toggle {
   margin-right: 4px;
 }
+.app-error-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--border-subtle);
+  background-color: var(--bg-surface);
+  color: var(--state-error);
+  font-size: var(--font-size-caption);
+}
+.app-error-banner > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .app-brand-mark {
   width: 24px;
   height: 24px;
@@ -1847,6 +1932,11 @@
   letter-spacing: 0.04em;
   color: var(--text-faint);
   padding: 0 8px 4px;
+}
+.sidebar-empty {
+  padding: 2px 8px 4px;
+  color: var(--text-faint);
+  font-size: 12px;
 }
 .app-project-dot {
   width: 7px;

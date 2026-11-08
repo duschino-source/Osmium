@@ -14,9 +14,12 @@ import type {
   TeamworkPlan,
   TeamworkRunState,
 } from '@osmium/core';
+import type { WorkspaceChangeEvent, WorkspaceFileEntry } from './workspace-service.js';
 
 export type { OsmiumSettings, ThemeMode, ThemePalette } from '@osmium/core';
 export { DEFAULT_OSMIUM_SETTINGS } from '@osmium/core';
+
+export type { WorkspaceChangeEvent, WorkspaceFileEntry } from './workspace-service.js';
 
 export interface FileTreeNode {
   name: string;
@@ -253,6 +256,14 @@ export interface OsmiumBridge {
     onStateChange(cb: (state: TeamworkRunState) => void): () => void;
   };
   ide: {
+    getWorkspaceRoot(): Promise<string | null>;
+    openFolder(): Promise<string | null>;
+    setWorkspaceRoot(rootPath: string): Promise<string>;
+    listWorkspaceFiles(rootPath?: string): Promise<WorkspaceFileEntry[]>;
+    watchWorkspace(rootPath?: string): Promise<boolean>;
+    unwatchWorkspace(): Promise<boolean>;
+    onWorkspaceChanged(cb: (batch: WorkspaceChangeEvent[]) => void): () => void;
+    onWorkspaceWatchError(cb: (payload: { message: string }) => void): () => void;
     readTree(rootPath: string, relPath?: string): Promise<FileTreeNode[]>;
     readFile(filePath: string): Promise<FileReadResult>;
     writeFile(
@@ -292,6 +303,7 @@ export interface OsmiumBridge {
     terminalWrite(id: string, data: string): Promise<void>;
     terminalResize(id: string, cols: number, rows: number): Promise<void>;
     terminalClose(id: string): Promise<void>;
+    onTerminalData(cb: (payload: { sessionId: string; data: string }) => void): () => void;
     lspStatus(cwd: string): Promise<LspServerStatus[]>;
     lspRequest(cwd: string, method: string, params?: unknown): Promise<unknown>;
     tasksList(cwd: string): Promise<Array<{ name: string; command: string }>>;

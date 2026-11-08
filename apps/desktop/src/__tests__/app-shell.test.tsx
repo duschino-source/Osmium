@@ -14,20 +14,14 @@ afterEach(() => {
 });
 
 describe('@osmium/desktop Phase 0 App Shell', () => {
-  it('renders sidebar navigation, projects with CLI dots, recent sessions, and footer links', () => {
+  it('renders sidebar navigation, an honest empty project state, and footer links', () => {
     render(<App />);
     const sidebar = screen.getByTestId('app-sidebar');
     expect(sidebar).toBeDefined();
     expect(screen.getByTestId('mode-btn-code').textContent).toBe('Code');
     expect(screen.getByTestId('mode-btn-chat').textContent).toBe('Chat');
     expect(screen.getByTestId('nav-item-new-task').textContent).toBe('New Task');
-    expect(screen.getByTestId('sidebar-project-api-gateway').textContent).toContain('api-gateway');
-    expect(screen.getByTestId('sidebar-project-landing-site').textContent).toContain(
-      'landing-site',
-    );
-    expect(screen.getByTestId('sidebar-project-cli-playground').textContent).toContain(
-      'cli-playground',
-    );
+    expect(screen.getByTestId('sidebar-projects-empty').textContent).toBe('No projects yet');
     expect(screen.getByTestId('footer-item-cli-hub').textContent).toBe('CLI Hub');
   });
 
@@ -330,5 +324,38 @@ describe('@osmium/desktop Phase 0 App Shell', () => {
     fireEvent.submit(screen.getByTestId('explorer-create-form'));
 
     await waitFor(() => expect(createEntry).toHaveBeenCalledWith('notes.md', 'file'));
+  });
+
+  it('adopts a real workspace root and opens a file from Quick Open', async () => {
+    (window as unknown as { osmium: unknown }).osmium = {
+      cli: { detectAll: async () => ({}) },
+      ide: {
+        getWorkspaceRoot: async () => '/root',
+        readTree: async () => [
+          {
+            name: 'notes.md',
+            relPath: 'notes.md',
+            absPath: '/root/notes.md',
+            kind: 'file',
+          },
+        ],
+        listWorkspaceFiles: async () => [{ relPath: 'notes.md', name: 'notes.md', kind: 'file' }],
+        readFile: async () => ({ content: '# Notes' }),
+        gitBranches: async () => ({ current: 'main', branches: ['main'] }),
+        gitStatus: async () => ({ branch: 'main', files: [] }),
+        onWorkspaceChanged: () => () => {},
+        watchWorkspace: async () => true,
+      },
+    };
+
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId('file-tree-item-notes.md')).toBeDefined());
+
+    fireEvent.keyDown(window, { key: 'p', ctrlKey: true });
+    const input = screen.getByTestId('quick-open-input');
+    fireEvent.change(input, { target: { value: 'notes' } });
+    fireEvent.click(screen.getByTestId('quick-open-item-notes.md'));
+
+    await waitFor(() => expect(screen.getByTestId('editor-tab-notes.md')).toBeDefined());
   });
 });

@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Menu } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, Menu } from 'electron';
 Menu.setApplicationMenu(null);
 // Stable Windows taskbar/notification identity for the app icon.
 app.setAppUserModelId('com.osmiumide.app');
@@ -15,6 +15,7 @@ import {
   SearchService,
   GitService,
   TerminalService,
+  WorkspaceService,
   DEFAULT_OSMIUM_SETTINGS,
   type OsmiumSettings,
 } from '@osmium/ide-core';
@@ -31,6 +32,7 @@ const fileService = new FileService();
 const searchService = new SearchService();
 const gitService = new GitService();
 const terminalService = new TerminalService();
+const workspaceService = new WorkspaceService();
 
 let adapterHost: AdapterHostClient | null = null;
 let settingsStore: SettingsStore | null = null;
@@ -133,6 +135,53 @@ function registerPhase0IpcHandlers(): void {
   });
   ipcMain.handle('ide:deleteEntry', async (_event, targetPath: string) => {
     return fileService.deleteEntry(targetPath);
+  });
+  ipcMain.handle('ide:moveEntry', async (_event, srcPath: string, destPath: string) => {
+    return fileService.renameEntry(srcPath, destPath);
+  });
+
+  // Workspace root, Open Folder, and the live filesystem watcher
+  ipcMain.handle('ide:getWorkspaceRoot', async () => workspaceService.getRoot());
+
+  ipcMain.handle('ide:openFolder', async () => {
+    const result = await dialog.showOpenDialog({
+      properties: ['openDirectory'],
+      title: 'Open Folder',
+    });
+    if (result.canceled || result.filePaths.length === 0) return null;
+    const root = await workspaceService.setRoot(result.filePaths[0]);
+    await workspaceService.watch(root);
+    return root;
+  });
+
+  ipcMain.handle('ide:setWorkspaceRoot', async (_event, rootPath: string) => {
+    const root = await workspaceService.setRoot(rootPath);
+    await workspaceService.watch(root);
+    return root;
+  });
+
+  ipcMain.handle('ide:listWorkspaceFiles', async (_event, rootPath?: string) => {
+    return workspaceService.listFiles(rootPath || workspaceService.getRoot() || undefined);
+  });
+
+  ipcMain.handle('ide:watchWorkspace', async (_event, rootPath?: string) => {
+    await workspaceService.watch(rootPath || workspaceService.getRoot() || undefined);
+    return true;
+  });
+
+  ipcMain.handle('ide:unwatchWorkspace', async () => {
+    await workspaceService.unwatch();
+    return true;
+  });
+
+  workspaceService.on('change', (batch: unknown) => {
+    mainWindow?.webContents.send('ide:workspaceChanged', batch);
+  });
+  workspaceService.on('error', (error: unknown) => {
+    // A watcher failure must be visible, not silent, but must not crash the app.
+    mainWindow?.webContents.send('ide:workspaceWatchError', {
+      message: error instanceof Error ? error.message : String(error),
+    });
   });
 
   // Search
@@ -379,13 +428,27 @@ void app.whenReady().then(() => {
 });
 
 let adapterHostClosing = false;
+let forceQuitTimer: ReturnType<typeof setTimeout> | null = null;
 app.on('before-quit', (event) => {
+  // Kill every PTY before the window goes away. Without this, closing the app
+  // leaves orphaned shells on Windows.
+  terminalService.closeAll();
+  void workspaceService.unwatch();
+
   const client = adapterHost;
   if (!client || adapterHostClosing) return;
   adapterHostClosing = true;
   adapterHost = null;
   event.preventDefault();
+  // A wedged CLI must not prevent the app from closing. The graceful client
+  // close has its own short timeouts; this is the final safety net.
+  forceQuitTimer = setTimeout(() => app.exit(0), 8000);
+  forceQuitTimer.unref?.();
   void client.close().finally(() => {
+    if (forceQuitTimer) {
+      clearTimeout(forceQuitTimer);
+      forceQuitTimer = null;
+    }
     app.quit();
   });
 });
